@@ -1,0 +1,887 @@
+<title>Presensi Proyek API</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+    :root {
+        --bg: #f5f7fb;
+        --surface: #ffffff;
+        --surface-2: #f0f3f8;
+        --ink: #0e1a2b;
+        --ink-2: #3a475c;
+        --muted: #6b7a90;
+        --line: #dee5ef;
+        --accent: #1e5aa8;
+        --accent-ink: #ffffff;
+        --accent-soft: #e7eff9;
+        --code-bg: #0f1a2b;
+        --code-line: #1f2d43;
+        --code-ink: #dce6f5;
+        --code-muted: #8396b3;
+        --j-key: #8ec5ff;
+        --j-str: #a8e3b5;
+        --j-num: #f5c58a;
+        --j-lit: #f2a0c8;
+        --get: #0e7a5a; --get-bg: #e2f4ec;
+        --post: #1e5aa8; --post-bg: #e7eff9;
+        --patch: #9a5b00; --patch-bg: #fbf0dc;
+        --pub: #0e7a5a; --pub-bg: #e2f4ec;
+        --tok: #475569; --tok-bg: #edf1f6;
+        --tl: #7a3fb0; --tl-bg: #f2eafb;
+        --callout-bg: #f0f6fe; --callout-line: #b9d2f2;
+        --sans: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+        --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+        --nav-w: 288px;
+    }
+    @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+            color-scheme: dark;
+            --bg: #0b111c; --surface: #111a28; --surface-2: #162133;
+            --ink: #e6edf7; --ink-2: #b8c4d6; --muted: #8292a9; --line: #233044;
+            --accent: #74a8ea; --accent-ink: #0b111c; --accent-soft: #16263d;
+            --code-bg: #070c15; --code-line: #18233a;
+            --get: #5fd1a6; --get-bg: #10301f; --post: #8db8f0; --post-bg: #16263d; --patch: #f0b860; --patch-bg: #33240c;
+            --pub: #5fd1a6; --pub-bg: #10301f; --tok: #b8c4d6; --tok-bg: #1d293b; --tl: #c9a2f0; --tl-bg: #2a1c3d;
+            --callout-bg: #13203a; --callout-line: #2d4a75;
+        }
+    }
+    :root[data-theme="dark"] {
+        color-scheme: dark;
+        --bg: #0b111c; --surface: #111a28; --surface-2: #162133;
+        --ink: #e6edf7; --ink-2: #b8c4d6; --muted: #8292a9; --line: #233044;
+        --accent: #74a8ea; --accent-ink: #0b111c; --accent-soft: #16263d;
+        --code-bg: #070c15; --code-line: #18233a;
+        --get: #5fd1a6; --get-bg: #10301f; --post: #8db8f0; --post-bg: #16263d; --patch: #f0b860; --patch-bg: #33240c;
+        --pub: #5fd1a6; --pub-bg: #10301f; --tok: #b8c4d6; --tok-bg: #1d293b; --tl: #c9a2f0; --tl-bg: #2a1c3d;
+        --callout-bg: #13203a; --callout-line: #2d4a75;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+    body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink-2);
+        font: 15px/1.65 var(--sans);
+        -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+    .shell { display: grid; grid-template-columns: var(--nav-w) minmax(0, 1fr); min-height: 100vh; }
+
+    /* ---------- Navigasi ---------- */
+    .nav {
+        position: sticky;
+        top: env(safe-area-inset-top, 0px);
+        align-self: start;
+        height: 100vh;
+        overflow-y: auto;
+        padding: 24px 16px 40px 20px;
+        border-right: 1px solid var(--line);
+        background: var(--surface);
+        scrollbar-width: thin;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; padding: 0 4px 18px; }
+    .brand-mark {
+        width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
+        display: grid; place-items: center;
+        background: var(--accent); color: var(--accent-ink);
+        font: 700 13px var(--mono); letter-spacing: -.02em;
+    }
+    .brand strong { display: block; color: var(--ink); font-size: 14px; line-height: 1.2; }
+    .brand small { display: block; color: var(--muted); font-size: 12px; }
+    .search {
+        width: 100%; margin-bottom: 14px; padding: 8px 12px;
+        border: 1px solid var(--line); border-radius: 8px;
+        background: var(--surface-2); color: var(--ink);
+        font: 13px var(--sans);
+    }
+    .search::placeholder { color: var(--muted); }
+    .nav ul { list-style: none; margin: 0; padding: 0; }
+    .nav-section { margin-top: 4px; }
+    .nav-section-link {
+        display: flex; gap: 8px; align-items: baseline;
+        padding: 6px 8px; border-radius: 6px;
+        color: var(--ink); font-weight: 600; font-size: 13.5px;
+    }
+    .nav-num { color: var(--muted); font: 500 12px var(--mono); min-width: 12px; }
+    .nav-section > ul { padding: 2px 0 6px 28px; }
+    .nav-sub, .nav-group-link { display: block; padding: 3px 8px; border-radius: 6px; color: var(--ink-2); font-size: 13px; }
+    .nav-group-link { color: var(--muted); font-size: 11.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; margin-top: 8px; }
+    .nav-group > ul { margin-left: -6px; }
+    .nav-ep {
+        display: flex; align-items: center; gap: 8px;
+        padding: 4px 6px; border-radius: 6px; color: var(--ink-2);
+        font-size: 12.5px;
+    }
+    .nav-ep .method { width: 46px; text-align: center; flex-shrink: 0; }
+    .nav-path { font-family: var(--mono); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .nav a:hover { background: var(--surface-2); text-decoration: none; }
+    .nav a.is-active { background: var(--accent-soft); color: var(--accent); }
+    .nav [hidden] { display: none !important; }
+    .nav-empty { padding: 8px; color: var(--muted); font-size: 13px; }
+
+    /* ---------- Konten ---------- */
+    .main { min-width: 0; padding: 0 clamp(16px, 4vw, 56px) 96px; }
+    .doc { max-width: 880px; }
+
+    .masthead { padding: 48px 0 28px; border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+    .eyebrow { margin: 0 0 10px; color: var(--accent); font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+    .masthead h1 { margin: 0; color: var(--ink); font-size: clamp(30px, 4vw, 40px); line-height: 1.15; letter-spacing: -.03em; font-weight: 800; text-wrap: balance; }
+    .masthead .lede { margin: 12px 0 24px; max-width: 62ch; font-size: 16px; }
+    .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+    .fact { background: var(--surface); padding: 12px 14px; display: grid; gap: 2px; }
+    .fact span { color: var(--muted); font-size: 11.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+    .fact strong { color: var(--ink); font: 500 13.5px var(--mono); overflow-wrap: anywhere; }
+
+    .quick { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+    .quick a { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-size: 13px; font-weight: 600; }
+    .quick a:hover { border-color: var(--accent); color: var(--accent); text-decoration: none; }
+    .quick code { font-size: .85em; padding: 0 4px; }
+    .doc h2, .doc h3, .doc h4 { position: relative; color: var(--ink); text-wrap: balance; }
+    .doc h2 { margin: 56px 0 14px; font-size: 26px; letter-spacing: -.02em; font-weight: 800; padding-top: 8px; }
+    .doc h3 { margin: 36px 0 10px; font-size: 19px; font-weight: 700; }
+    .doc h4 { margin: 28px 0 10px; font-size: 16px; font-weight: 700; }
+    .masthead + h2 { margin-top: 32px; }
+    .h-num { color: var(--muted); font-family: var(--mono); font-weight: 500; font-size: .8em; margin-right: 4px; }
+    .anchor { position: absolute; left: -22px; color: var(--muted); opacity: 0; font-weight: 400; text-decoration: none !important; }
+    h2:hover .anchor, h3:hover .anchor, h4:hover .anchor, .anchor:focus { opacity: 1; }
+
+    .doc p, .doc li { max-width: 72ch; }
+    .doc ul, .doc ol { padding-left: 22px; }
+    .doc li { margin: 4px 0; }
+    .doc strong { color: var(--ink); font-weight: 650; }
+    .doc code { font: 500 .86em var(--mono); color: var(--ink); background: var(--surface-2); border: 1px solid var(--line); padding: 1px 5px; border-radius: 5px; overflow-wrap: anywhere; }
+
+    /* Kepala endpoint */
+    .doc h4.endpoint {
+        display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+        margin: 40px 0 14px; padding: 14px 16px;
+        background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+        scroll-margin-top: 16px;
+    }
+    .endpoint .anchor { left: -24px; }
+    .ep-num { color: var(--muted); font: 500 12px var(--mono); }
+    .doc .ep-path { background: none; border: 0; padding: 0; font-size: 15px; font-weight: 600; color: var(--ink); }
+    .endpoint .auth { margin-left: auto; }
+
+    .method {
+        display: inline-block; padding: 2px 7px; border-radius: 5px;
+        font: 700 11px/1.5 var(--mono); letter-spacing: .03em;
+    }
+    .m-get { color: var(--get); background: var(--get-bg); }
+    .m-post { color: var(--post); background: var(--post-bg); }
+    .m-patch, .m-put { color: var(--patch); background: var(--patch-bg); }
+    .m-delete { color: #b42323; background: #fdeceb; }
+
+    .auth { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 700; white-space: nowrap; vertical-align: 1px; }
+    .auth::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .auth-public { color: var(--pub); background: var(--pub-bg); }
+    .auth-token { color: var(--tok); background: var(--tok-bg); }
+    .auth-tl { color: var(--tl); background: var(--tl-bg); }
+
+    .req { color: var(--accent); font-weight: 800; }
+
+    /* Tabel */
+    .table-wrap { overflow-x: auto; margin: 14px 0 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+    table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+    th { text-align: left; color: var(--muted); font-size: 11.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; background: var(--surface-2); padding: 9px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    td { padding: 9px 12px; border-top: 1px solid var(--line); vertical-align: top; }
+    tr:first-child td { border-top: 0; }
+    td:first-child { white-space: nowrap; }
+    td code { white-space: nowrap; }
+    td:last-child code { white-space: normal; }
+
+    /* Blok kode */
+    .code { margin: 14px 0 18px; border-radius: 10px; overflow: hidden; background: var(--code-bg); border: 1px solid var(--code-line); }
+    .code figcaption { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px 6px 14px; border-bottom: 1px solid var(--code-line); color: var(--code-muted); font: 600 11px var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+    .copy { border: 1px solid var(--code-line); background: transparent; color: var(--code-muted); border-radius: 6px; padding: 3px 10px; font: 600 11.5px var(--sans); cursor: pointer; }
+    .copy:hover { color: var(--code-ink); border-color: var(--code-muted); }
+    .code pre { margin: 0; padding: 14px 16px; overflow-x: auto; }
+    .code code { background: none; border: 0; padding: 0; color: var(--code-ink); font: 400 12.8px/1.6 var(--mono); white-space: pre; overflow-wrap: normal; }
+    .j-key { color: var(--j-key); } .j-str { color: var(--j-str); } .j-num { color: var(--j-num); } .j-lit { color: var(--j-lit); }
+    .s-flag { color: var(--j-num); } .s-var { color: var(--j-key); }
+
+    .callout { margin: 16px 0; padding: 12px 16px; border-left: 3px solid var(--callout-line); background: var(--callout-bg); border-radius: 0 8px 8px 0; }
+    .callout p { margin: 0; }
+
+    .diagram { overflow-x: auto; margin: 16px 0; padding: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+
+    .doc input[type="checkbox"] { accent-color: var(--accent); margin-right: 8px; }
+    .doc li:has(> input[type="checkbox"]) { list-style: none; margin-left: -22px; }
+
+    .footer { margin-top: 64px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+
+    /* Layar sempit: navigasi jadi panel yang bisa dibuka */
+    .nav-toggle { display: none; }
+    @media (max-width: 900px) {
+        .shell { grid-template-columns: 1fr; }
+        .nav { position: static; height: auto; max-height: none; border-right: 0; border-bottom: 1px solid var(--line); padding: 16px; }
+        .nav-toggle {
+            display: inline-flex; align-items: center; gap: 6px;
+            border: 1px solid var(--line); background: var(--surface-2); color: var(--ink);
+            border-radius: 8px; padding: 6px 12px; font: 600 13px var(--sans); cursor: pointer;
+        }
+        .nav-body[data-open="false"] { display: none; }
+        .brand { padding-bottom: 12px; justify-content: space-between; }
+        .brand > div { display: flex; gap: 10px; align-items: center; }
+        .anchor { display: none; }
+        .endpoint .auth { margin-left: 0; }
+    }
+</style>
+
+<div class="shell">
+    <nav class="nav" aria-label="Daftar isi">
+        <div class="brand">
+            <div style="display:flex;gap:10px;align-items:center">
+                <span class="brand-mark">v1</span>
+                <span><strong>Presensi Proyek API</strong><small>Referensi aplikasi mobile</small></span>
+            </div>
+            <button class="nav-toggle" type="button" id="navToggle" aria-expanded="false" aria-controls="navBody">Daftar isi</button>
+        </div>
+        <div class="nav-body" id="navBody">
+            <label for="navSearch" class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Cari endpoint</label>
+            <input id="navSearch" class="search" type="search" placeholder="Cari endpoint, mis. check-in" autocomplete="off">
+            <ul id="navList"><li class="nav-section"><a href="#1-ringkasan" class="nav-section-link"><span class="nav-num">1</span>Ringkasan</a></li><li class="nav-section"><a href="#2-konvensi-umum" class="nav-section-link"><span class="nav-num">2</span>Konvensi umum</a><ul><li><a href="#21-header" class="nav-sub">Header</a></li><li><a href="#22-amplop-respons" class="nav-sub">Amplop respons</a></li><li><a href="#23-tipe-data" class="nav-sub">Tipe data</a></li><li><a href="#24-batas-laju-rate-limit" class="nav-sub">Batas laju (rate limit)</a></li><li><a href="#25-status-http" class="nav-sub">Status HTTP</a></li></ul></li><li class="nav-section"><a href="#3-kode-reason" class="nav-section-link"><span class="nav-num">3</span>Kode reason</a></li><li class="nav-section"><a href="#4-objek-data" class="nav-section-link"><span class="nav-num">4</span>Objek data</a><ul><li><a href="#41-profile" class="nav-sub">Profile</a></li><li><a href="#42-attendance" class="nav-sub">Attendance</a></li><li><a href="#43-leaverequest" class="nav-sub">LeaveRequest</a></li></ul></li><li class="nav-section"><a href="#5-endpoint" class="nav-section-link"><span class="nav-num">5</span>Endpoint</a><ul><li class="nav-group"><a href="#51-publik" class="nav-group-link">Publik</a><ul><li><a href="#511-get-time" class="nav-ep" data-search="get /time"><span class="method m-get">GET</span><span class="nav-path">/time</span></a></li><li><a href="#512-get-appinfo" class="nav-ep" data-search="get /app/info"><span class="method m-get">GET</span><span class="nav-path">/app/info</span></a></li><li><a href="#513-post-authlogin" class="nav-ep" data-search="post /auth/login"><span class="method m-post">POST</span><span class="nav-path">/auth/login</span></a></li></ul></li><li class="nav-group"><a href="#52-akun" class="nav-group-link">Akun</a><ul><li><a href="#521-post-authlogout" class="nav-ep" data-search="post /auth/logout"><span class="method m-post">POST</span><span class="nav-path">/auth/logout</span></a></li><li><a href="#522-get-me" class="nav-ep" data-search="get /me"><span class="method m-get">GET</span><span class="nav-path">/me</span></a></li><li><a href="#523-post-mepassword" class="nav-ep" data-search="post /me/password"><span class="method m-post">POST</span><span class="nav-path">/me/password</span></a></li></ul></li><li class="nav-group"><a href="#53-proyek" class="nav-group-link">Proyek</a><ul><li><a href="#531-get-projectsidconfig" class="nav-ep" data-search="get /projects/{id}/config"><span class="method m-get">GET</span><span class="nav-path">/projects/{id}/config</span></a></li><li><a href="#532-get-projectsidperiods" class="nav-ep" data-search="get /projects/{id}/periods"><span class="method m-get">GET</span><span class="nav-path">/projects/{id}/periods</span></a></li></ul></li><li class="nav-group"><a href="#54-presensi" class="nav-group-link">Presensi</a><ul><li><a href="#541-get-attendancetodayprojectidid" class="nav-ep" data-search="get /attendance/today?project_id={id}"><span class="method m-get">GET</span><span class="nav-path">/attendance/today</span></a></li><li><a href="#542-post-attendancecheck-in" class="nav-ep" data-search="post /attendance/check-in"><span class="method m-post">POST</span><span class="nav-path">/attendance/check-in</span></a></li><li><a href="#543-post-attendancecheck-out" class="nav-ep" data-search="post /attendance/check-out"><span class="method m-post">POST</span><span class="nav-path">/attendance/check-out</span></a></li><li><a href="#544-post-attendancesync" class="nav-ep" data-search="post /attendance/sync"><span class="method m-post">POST</span><span class="nav-path">/attendance/sync</span></a></li><li><a href="#545-get-attendancehistory" class="nav-ep" data-search="get /attendance/history"><span class="method m-get">GET</span><span class="nav-path">/attendance/history</span></a></li><li><a href="#546-get-attendanceid" class="nav-ep" data-search="get /attendance/{id}"><span class="method m-get">GET</span><span class="nav-path">/attendance/{id}</span></a></li><li><a href="#547-get-attendanceidphotoside" class="nav-ep" data-search="get /attendance/{id}/photo/{side}"><span class="method m-get">GET</span><span class="nav-path">/attendance/{id}/photo/{side}</span></a></li></ul></li><li class="nav-group"><a href="#55-izin--sakit--cuti" class="nav-group-link">Izin / sakit / cuti</a><ul><li><a href="#551-get-leave-requestsprojectidid" class="nav-ep" data-search="get /leave-requests?project_id={id}"><span class="method m-get">GET</span><span class="nav-path">/leave-requests</span></a></li><li><a href="#552-post-leave-requests" class="nav-ep" data-search="post /leave-requests"><span class="method m-post">POST</span><span class="nav-path">/leave-requests</span></a></li></ul></li><li class="nav-group"><a href="#56-team-leader" class="nav-group-link">Team Leader</a><ul><li><a href="#561-get-teamtodayprojectidid" class="nav-ep" data-search="get /team/today?project_id={id}"><span class="method m-get">GET</span><span class="nav-path">/team/today</span></a></li><li><a href="#562-get-approvals" class="nav-ep" data-search="get /approvals"><span class="method m-get">GET</span><span class="nav-path">/approvals</span></a></li><li><a href="#563-patch-approvalsleaveid" class="nav-ep" data-search="patch /approvals/leave/{id}"><span class="method m-patch">PATCH</span><span class="nav-path">/approvals/leave/{id}</span></a></li><li><a href="#564-patch-approvalsoffsiteid" class="nav-ep" data-search="patch /approvals/offsite/{id}"><span class="method m-patch">PATCH</span><span class="nav-path">/approvals/offsite/{id}</span></a></li></ul></li></ul></li><li class="nav-section"><a href="#6-alur-yang-wajib-diikuti-aplikasi" class="nav-section-link"><span class="nav-num">6</span>Alur yang wajib diikuti aplikasi</a><ul><li><a href="#61-saat-aplikasi-dibuka" class="nav-sub">Saat aplikasi dibuka</a></li><li><a href="#62-check-in--check-out" class="nav-sub">Check-in / check-out</a></li><li><a href="#63-mode-offline--jam-terpercaya" class="nav-sub">Mode offline &amp; jam terpercaya</a></li><li><a href="#64-shift-melewati-tengah-malam" class="nav-sub">Shift melewati tengah malam</a></li><li><a href="#65-perangkat--sesi" class="nav-sub">Perangkat &amp; sesi</a></li></ul></li><li class="nav-section"><a href="#7-checklist-implementasi" class="nav-section-link"><span class="nav-num">7</span>Checklist implementasi</a></li><li class="nav-section"><a href="#8-akun-login-per-peran" class="nav-section-link"><span class="nav-num">8</span>Akun login per peran</a></li><li class="nav-section"><a href="#9-migrasi--data-awal-seeder" class="nav-section-link"><span class="nav-num">9</span>Migrasi &amp; data awal (seeder)</a><ul><li><a href="#91-prasyarat" class="nav-sub">Prasyarat</a></li><li><a href="#92-server-pengembangan--qa-dengan-data-demo" class="nav-sub">Server pengembangan / QA (dengan data demo)</a></li><li><a href="#93-server-klien-baru-tanpa-data-demo" class="nav-sub">Server klien baru (tanpa data demo)</a></li></ul></li></ul>
+            <p class="nav-empty" id="navEmpty" hidden>Tidak ada endpoint yang cocok.</p>
+        </div>
+    </nav>
+
+    <main class="main">
+        <article class="doc">
+            <header class="masthead">
+                <p class="eyebrow">Dokumentasi API · versi 1</p>
+                <h1>Presensi Proyek API</h1>
+                <p class="lede">Referensi lengkap untuk tim pengembang aplikasi mobile Flutter (Android &amp; iOS): 21 endpoint, kode penolakan, objek data, dan alur wajib untuk presensi online, offline, dan shift yang melewati tengah malam. Semua contoh respons direkam dari server pengembangan.</p>
+                <div class="facts">
+                    <div class="fact"><span>Base URL</span><strong>/api/v1</strong></div>
+                    <div class="fact"><span>Autentikasi</span><strong>Bearer (Sanctum)</strong></div>
+                    <div class="fact"><span>Format</span><strong>JSON · multipart</strong></div>
+                    <div class="fact"><span>Zona waktu</span><strong>ISO 8601 + offset</strong></div>
+                    <div class="fact"><span>Diperbarui</span><strong>2 Okt 2026</strong></div>
+                </div>
+                <nav class="quick" aria-label="Tautan cepat">
+                    <a href="#8-akun-login-per-peran">Akun login per peran</a>
+                    <a href="#9-migrasi--data-awal-seeder">Migrasi &amp; data awal</a>
+                    <a href="#3-kode-reason">Kode <code>reason</code></a>
+                    <a href="#6-alur-yang-wajib-diikuti-aplikasi">Alur wajib aplikasi</a>
+                </nav>
+            </header>
+
+            <h2 id="1-ringkasan"><a class="anchor" href="#1-ringkasan" aria-hidden="true" tabindex="-1">#</a><span class="h-num">1.</span> Ringkasan</h2><div class="table-wrap"><table><thead><tr><th>Item</th><th>Nilai</th></tr></thead><tbody><tr><td>Base URL</td><td><code>https://&lt;domain-server&gt;/api/v1</code> (lokal: <code>http://127.0.0.1:8000/api/v1</code>)</td></tr><tr><td>Format</td><td>JSON, kecuali endpoint unggah foto (<code>multipart/form-data</code>)</td></tr><tr><td>Autentikasi</td><td>Bearer token (Laravel Sanctum), didapat dari <code>POST /auth/login</code></td></tr><tr><td>Zona waktu</td><td>Waktu dikirim sebagai ISO 8601 <strong>dengan offset</strong>, mengikuti zona waktu proyek (mis. <code>+07:00</code> untuk WIB)</td></tr><tr><td>Bahasa pesan</td><td>Bahasa Indonesia, siap ditampilkan langsung ke pengguna</td></tr><tr><td>Satu server</td><td>= satu perusahaan/KSO, bisa banyak proyek. Setiap klien punya server &amp; build aplikasi sendiri (white-label)</td></tr></tbody></table></div><p><strong>Peran pengguna di aplikasi mobile</strong></p>
+<div class="table-wrap"><table><thead><tr><th>Peran</th><th>Akses</th></tr></thead><tbody><tr><td>Karyawan</td><td>Presensi, riwayat, pengajuan izin/sakit/cuti, profil</td></tr><tr><td>Team Leader</td><td>Semua akses karyawan + kehadiran tim + persetujuan, <strong>hanya untuk proyek tempat ia menjadi TL</strong> (<code>is_team_leader: true</code>)</td></tr></tbody></table></div><p>Akun super admin / admin proyek tanpa data karyawan <strong>tidak bisa</strong> login ke aplikasi mobile.</p>
+
+<h2 id="2-konvensi-umum"><a class="anchor" href="#2-konvensi-umum" aria-hidden="true" tabindex="-1">#</a><span class="h-num">2.</span> Konvensi umum</h2><h3 id="21-header"><a class="anchor" href="#21-header" aria-hidden="true" tabindex="-1">#</a><span class="h-num">2.1</span> Header</h3><div class="table-wrap"><table><thead><tr><th>Header</th><th>Nilai</th><th>Keterangan</th></tr></thead><tbody><tr><td><code>Accept</code></td><td><code>application/json</code></td><td><strong>Wajib di semua request</strong>, agar error selalu berupa JSON</td></tr><tr><td><code>Authorization</code></td><td><code>Bearer &lt;token&gt;</code></td><td>Semua endpoint kecuali yang bertanda <em>publik</em></td></tr><tr><td><code>Content-Type</code></td><td><code>application/json</code> atau <code>multipart/form-data</code></td><td>Sesuai endpoint</td></tr></tbody></table></div><h3 id="22-amplop-respons"><a class="anchor" href="#22-amplop-respons" aria-hidden="true" tabindex="-1">#</a><span class="h-num">2.2</span> Amplop respons</h3><p>Semua respons JSON memakai bentuk yang sama:</p>
+<figure class="code"><figcaption><span>JSON</span><button type="button" class="copy">Salin</button></figcaption><pre><code>{
+  <span class="j-key">&quot;success&quot;</span>: <span class="j-lit">true</span>,
+  <span class="j-key">&quot;message&quot;</span>: <span class="j-str">&quot;Check-in berhasil.&quot;</span>,
+  <span class="j-key">&quot;reason&quot;</span>: <span class="j-lit">null</span>,
+  <span class="j-key">&quot;data&quot;</span>: { },
+  <span class="j-key">&quot;errors&quot;</span>: <span class="j-lit">null</span>
+}</code></pre></figure><div class="table-wrap"><table><thead><tr><th>Field</th><th>Tipe</th><th>Keterangan</th></tr></thead><tbody><tr><td><code>success</code></td><td>bool</td><td><code>true</code> bila berhasil</td></tr><tr><td><code>message</code></td><td>string | null</td><td>Pesan untuk ditampilkan ke pengguna (boleh <code>null</code> pada respons sukses)</td></tr><tr><td><code>reason</code></td><td>string | null</td><td><strong>Kode mesin</strong> untuk percabangan logika di aplikasi. <code>null</code> bila sukses. Lihat <a href="#3-kode-reason">§3</a></td></tr><tr><td><code>data</code></td><td>object | array | null</td><td>Isi respons. Pada sebagian error berisi konteks tambahan (mis. jarak ke lokasi)</td></tr><tr><td><code>errors</code></td><td>object | null</td><td>Hanya untuk <code>reason: &quot;validation&quot;</code>: <code>{ &quot;nama_field&quot;: [&quot;pesan&quot;, ...] }</code></td></tr></tbody></table></div><aside class="callout"><p><strong>Aturan:</strong> percabangan logika di aplikasi <strong>memakai <code>reason</code></strong>, bukan teks <code>message</code> (teks bisa berubah).</p>
+</aside><h3 id="23-tipe-data"><a class="anchor" href="#23-tipe-data" aria-hidden="true" tabindex="-1">#</a><span class="h-num">2.3</span> Tipe data</h3><div class="table-wrap"><table><thead><tr><th>Jenis</th><th>Format</th><th>Contoh</th></tr></thead><tbody><tr><td>Tanggal</td><td><code>YYYY-MM-DD</code></td><td><code>&quot;2026-10-02&quot;</code></td></tr><tr><td>Waktu lengkap</td><td>ISO 8601 + offset zona proyek</td><td><code>&quot;2026-10-02T08:03:00+07:00&quot;</code></td></tr><tr><td>Jam shift</td><td><code>HH:mm:ss</code></td><td><code>&quot;08:00:00&quot;</code></td></tr><tr><td>Koordinat</td><td>number (derajat desimal)</td><td><code>-7.3154</code></td></tr><tr><td>Durasi</td><td>integer menit + label siap tampil</td><td><code>568</code>, <code>&quot;9 jam 28 menit&quot;</code></td></tr><tr><td>Boolean di multipart</td><td>string <code>&quot;true&quot;</code> / <code>&quot;false&quot;</code> (atau <code>&quot;1&quot;</code>/<code>&quot;0&quot;</code>)</td><td><code>is_mock=false</code></td></tr><tr><td>Objek di multipart</td><td>string JSON</td><td><code>device={&quot;model&quot;:&quot;Samsung A15&quot;,&quot;os&quot;:&quot;Android 14&quot;}</code></td></tr></tbody></table></div><h3 id="24-batas-laju-rate-limit"><a class="anchor" href="#24-batas-laju-rate-limit" aria-hidden="true" tabindex="-1">#</a><span class="h-num">2.4</span> Batas laju (rate limit)</h3><div class="table-wrap"><table><thead><tr><th>Endpoint</th><th>Batas</th></tr></thead><tbody><tr><td><code>POST /auth/login</code></td><td>10 request/menit per kombinasi username + IP</td></tr><tr><td><code>POST /attendance/check-in</code>, <code>check-out</code>, <code>sync</code></td><td>30 request/menit per pengguna</td></tr></tbody></table></div><p>Melebihi batas → HTTP <code>429</code>, <code>reason: &quot;http_429&quot;</code>. Tampilkan pesan dan coba lagi setelah jeda.</p>
+<h3 id="25-status-http"><a class="anchor" href="#25-status-http" aria-hidden="true" tabindex="-1">#</a><span class="h-num">2.5</span> Status HTTP</h3><div class="table-wrap"><table><thead><tr><th>Kode</th><th>Arti</th></tr></thead><tbody><tr><td>200</td><td>Berhasil</td></tr><tr><td>201</td><td>Data baru dibuat (check-in pertama, pengajuan izin)</td></tr><tr><td>401</td><td>Token tidak ada / kedaluwarsa / sudah logout → arahkan ke layar login</td></tr><tr><td>403</td><td>Ditolak karena hak akses atau kebijakan (lokasi palsu, perangkat lain, bukan TL)</td></tr><tr><td>404</td><td>Data tidak ditemukan</td></tr><tr><td>409</td><td>Konflik status (sudah check-in, belum check-in, shift kemarin masih terbuka, sudah diproses)</td></tr><tr><td>422</td><td>Validasi / aturan bisnis tidak terpenuhi (di luar radius, akurasi GPS, data offline kedaluwarsa)</td></tr><tr><td>429</td><td>Terlalu banyak request</td></tr><tr><td>500</td><td>Kesalahan server — tampilkan pesan umum, simpan data offline bila presensi</td></tr></tbody></table></div>
+<h2 id="3-kode-reason"><a class="anchor" href="#3-kode-reason" aria-hidden="true" tabindex="-1">#</a><span class="h-num">3.</span> Kode <code>reason</code></h2><div class="table-wrap"><table><thead><tr><th><code>reason</code></th><th>HTTP</th><th>Endpoint</th><th>Arti &amp; tindakan aplikasi</th></tr></thead><tbody><tr><td><code>validation</code></td><td>422</td><td>semua</td><td>Isian tidak valid. Tampilkan <code>errors</code> per field</td></tr><tr><td><code>unauthenticated</code></td><td>401</td><td>semua (terproteksi)</td><td>Token tidak valid → hapus token, ke layar login</td></tr><tr><td><code>invalid_credentials</code></td><td>401</td><td>login</td><td>Username / password salah</td></tr><tr><td><code>inactive</code></td><td>403</td><td>login &amp; semua</td><td>Akun dinonaktifkan admin → logout paksa</td></tr><tr><td><code>device_mismatch</code></td><td>403</td><td>login</td><td>Akun terikat ke HP lain. Minta karyawan menghubungi admin untuk <strong>reset perangkat</strong></td></tr><tr><td><code>not_assigned</code></td><td>403</td><td>presensi</td><td>Karyawan tidak terdaftar aktif di proyek pada tanggal tsb</td></tr><tr><td><code>mock_location</code></td><td>403</td><td>presensi</td><td>Lokasi palsu (Fake GPS) terdeteksi. <strong>Jangan simpan ke antrean offline</strong></td></tr><tr><td><code>outside_radius</code></td><td>422</td><td>presensi</td><td>Di luar radius &amp; presensi luar lokasi tidak diizinkan. <code>data: { distance_m, radius_m }</code></td></tr><tr><td><code>low_accuracy</code></td><td>422</td><td>presensi (online)</td><td>Akurasi GPS &gt; batas. <code>data: { accuracy, max }</code>. Minta pindah ke area terbuka lalu ulangi</td></tr><tr><td><code>note_required</code></td><td>422</td><td>presensi</td><td>Presensi luar lokasi wajib mengisi <code>note</code></td></tr><tr><td><code>checkin_not_open</code> / <code>checkin_closed</code></td><td>422</td><td>check-in (online)</td><td>Di luar jendela check-in shift</td></tr><tr><td><code>no_project_location</code></td><td>422</td><td>presensi</td><td>Proyek belum punya titik lokasi aktif (masalah konfigurasi admin)</td></tr><tr><td><code>already_checked_in</code></td><td>409</td><td>check-in</td><td>Sudah check-in untuk tanggal kerja ini → muat ulang <code>/attendance/today</code></td></tr><tr><td><code>open_previous_shift</code></td><td>409</td><td>check-in</td><td>Shift hari sebelumnya belum check-out. <code>data: { id, work_date, check_in_time }</code>. Lihat <a href="#64-shift-melewati-tengah-malam">§6.4</a></td></tr><tr><td><code>no_checkin</code></td><td>409</td><td>check-out</td><td>Tidak ada check-in terbuka dalam batas jam kerja</td></tr><tr><td><code>already_checked_out</code></td><td>409</td><td>check-out</td><td>Presensi terakhir sudah check-out</td></tr><tr><td><code>offline_not_allowed</code></td><td>422</td><td>presensi offline</td><td>Proyek tidak mengizinkan presensi offline</td></tr><tr><td><code>offline_expired</code></td><td>422</td><td>presensi offline</td><td>Data offline lebih tua dari <code>offline_max_hours</code> — <strong>permanen</strong>, hapus dari antrean dan beri tahu pengguna</td></tr><tr><td><code>invalid_time</code></td><td>422</td><td>presensi offline</td><td><code>captured_at</code> kosong atau di masa depan — <strong>permanen</strong></td></tr><tr><td><code>overlap</code></td><td>422</td><td>pengajuan izin</td><td>Sudah ada pengajuan pending/disetujui di rentang tanggal tsb</td></tr><tr><td><code>already_processed</code></td><td>409</td><td>approval</td><td>Pengajuan sudah disetujui/ditolak sebelumnya</td></tr><tr><td><code>forbidden</code></td><td>—</td><td>sync (per item)</td><td>Item ditujukan ke proyek yang bukan milik karyawan</td></tr><tr><td><code>http_403</code> / <code>http_404</code> / <code>http_429</code> / <code>http_&lt;kode&gt;</code></td><td>sesuai</td><td>semua</td><td>Error HTTP umum (mis. bukan TL proyek, data tidak ditemukan)</td></tr></tbody></table></div>
+<h2 id="4-objek-data"><a class="anchor" href="#4-objek-data" aria-hidden="true" tabindex="-1">#</a><span class="h-num">4.</span> Objek data</h2><h3 id="41-profile"><a class="anchor" href="#41-profile" aria-hidden="true" tabindex="-1">#</a><span class="h-num">4.1</span> <code>Profile</code></h3><p>Dikembalikan oleh <code>POST /auth/login</code> (dalam <code>data.profile</code>) dan <code>GET /me</code>.</p>
+<figure class="code"><figcaption><span>JSON</span><button type="button" class="copy">Salin</button></figcaption><pre><code>{
+  <span class="j-key">&quot;user&quot;</span>: { <span class="j-key">&quot;id&quot;</span>: <span class="j-num">9</span>, <span class="j-key">&quot;username&quot;</span>: <span class="j-str">&quot;agus.irawan&quot;</span>, <span class="j-key">&quot;email&quot;</span>: <span class="j-lit">null</span>, <span class="j-key">&quot;roles&quot;</span>: [<span class="j-str">&quot;employee&quot;</span>] },
+  <span class="j-key">&quot;employee&quot;</span>: {
+    <span class="j-key">&quot;id&quot;</span>: <span class="j-num">8</span>, <span class="j-key">&quot;nik&quot;</span>: <span class="j-lit">null</span>, <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;Agus Irawan&quot;</span>, <span class="j-key">&quot;full_name&quot;</span>: <span class="j-str">&quot;Agus Irawan&quot;</span>,
+    <span class="j-key">&quot;position&quot;</span>: <span class="j-str">&quot;Juru Ukur 1&quot;</span>, <span class="j-key">&quot;phone&quot;</span>: <span class="j-lit">null</span>
+  },
+  <span class="j-key">&quot;projects&quot;</span>: [
+    { <span class="j-key">&quot;id&quot;</span>: <span class="j-num">1</span>, <span class="j-key">&quot;code&quot;</span>: <span class="j-str">&quot;KDR&quot;</span>, <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;Nindya - ITP KSO Kedurus&quot;</span>, <span class="j-key">&quot;is_team_leader&quot;</span>: <span class="j-lit">false</span> }
+  ]
+}</code></pre></figure><div class="table-wrap"><table><thead><tr><th>Field</th><th>Keterangan</th></tr></thead><tbody><tr><td><code>employee.name</code></td><td>Nama dengan gelar (mis. <code>&quot;Edi Santoso, S.T., M.T.&quot;</code>) — untuk tampilan</td></tr><tr><td><code>projects[]</code></td><td>Proyek dengan penugasan <strong>aktif hari ini</strong>. Bila lebih dari satu, tampilkan pemilih proyek. Bila kosong, tampilkan pesan &quot;Belum ditugaskan ke proyek&quot;</td></tr><tr><td><code>projects[].is_team_leader</code></td><td><code>true</code> → tampilkan menu Team Leader untuk proyek tsb</td></tr><tr><td><code>user.roles</code></td><td>Informasi saja; gunakan <code>is_team_leader</code> per proyek untuk menu</td></tr></tbody></table></div><h3 id="42-attendance"><a class="anchor" href="#42-attendance" aria-hidden="true" tabindex="-1">#</a><span class="h-num">4.2</span> <code>Attendance</code></h3><p>Dipakai oleh endpoint presensi, riwayat, dan tim.</p>
+<figure class="code"><figcaption><span>JSON</span><button type="button" class="copy">Salin</button></figcaption><pre><code>{
+  <span class="j-key">&quot;id&quot;</span>: <span class="j-num">273</span>,
+  <span class="j-key">&quot;project_id&quot;</span>: <span class="j-num">1</span>,
+  <span class="j-key">&quot;employee&quot;</span>: { <span class="j-key">&quot;id&quot;</span>: <span class="j-num">8</span>, <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;Agus Irawan&quot;</span>, <span class="j-key">&quot;position&quot;</span>: <span class="j-str">&quot;Juru Ukur 1&quot;</span> },
+  <span class="j-key">&quot;work_date&quot;</span>: <span class="j-str">&quot;2026-10-02&quot;</span>,
+  <span class="j-key">&quot;shift&quot;</span>: <span class="j-str">&quot;Jam Kerja Standard&quot;</span>,
+  <span class="j-key">&quot;status&quot;</span>: <span class="j-str">&quot;hadir&quot;</span>,
+  <span class="j-key">&quot;late_minutes&quot;</span>: <span class="j-num">0</span>,
+  <span class="j-key">&quot;duration_minutes&quot;</span>: <span class="j-num">568</span>,
+  <span class="j-key">&quot;duration_label&quot;</span>: <span class="j-str">&quot;9 jam 28 menit&quot;</span>,
+  <span class="j-key">&quot;is_holiday_work&quot;</span>: <span class="j-lit">false</span>,
+  <span class="j-key">&quot;offsite_approval&quot;</span>: <span class="j-str">&quot;none&quot;</span>,
+  <span class="j-key">&quot;flags&quot;</span>: [],
+  <span class="j-key">&quot;check_in&quot;</span>: {
+    <span class="j-key">&quot;uuid&quot;</span>: <span class="j-str">&quot;1625cd7d-7141-4de8-8feb-9614116ffb62&quot;</span>,
+    <span class="j-key">&quot;time&quot;</span>: <span class="j-str">&quot;2026-10-02T08:03:00+07:00&quot;</span>,
+    <span class="j-key">&quot;next_day&quot;</span>: <span class="j-lit">false</span>,
+    <span class="j-key">&quot;latitude&quot;</span>: <span class="j-num">-7.31545</span>, <span class="j-key">&quot;longitude&quot;</span>: <span class="j-num">112.68552</span>, <span class="j-key">&quot;accuracy&quot;</span>: <span class="j-num">8.5</span>, <span class="j-key">&quot;distance_m&quot;</span>: <span class="j-num">6</span>,
+    <span class="j-key">&quot;mode&quot;</span>: <span class="j-str">&quot;onsite&quot;</span>, <span class="j-key">&quot;note&quot;</span>: <span class="j-lit">null</span>, <span class="j-key">&quot;offline&quot;</span>: <span class="j-lit">false</span>,
+    <span class="j-key">&quot;photo_url&quot;</span>: <span class="j-str">&quot;http://127.0.0.1:8765/api/v1/attendance/273/photo/in&quot;</span>,
+    <span class="j-key">&quot;thumb_url&quot;</span>: <span class="j-str">&quot;http://127.0.0.1:8765/api/v1/attendance/273/photo/in?thumb=1&quot;</span>
+  },
+  <span class="j-key">&quot;check_out&quot;</span>: <span class="j-lit">null</span>
+}</code></pre></figure><div class="table-wrap"><table><thead><tr><th>Field</th><th>Tipe</th><th>Keterangan</th></tr></thead><tbody><tr><td><code>work_date</code></td><td>date</td><td><strong>Tanggal kerja</strong> = tanggal check-in. Check-out lewat tengah malam tetap milik tanggal ini</td></tr><tr><td><code>employee</code></td><td>object</td><td>Hanya ada di <code>GET /attendance/{id}</code> dan <code>GET /approvals</code></td></tr><tr><td><code>status</code></td><td>enum</td><td><code>hadir</code> · <code>terlambat</code> · <code>izin</code> · <code>sakit</code> · <code>cuti</code> · <code>alpha</code> · <code>libur</code></td></tr><tr><td><code>late_minutes</code></td><td>int</td><td>Menit terlambat (0 bila tidak terlambat / fitur terlambat nonaktif)</td></tr><tr><td><code>duration_minutes</code> / <code>duration_label</code></td><td>int / string | null</td><td>Terisi setelah check-out</td></tr><tr><td><code>is_holiday_work</code></td><td>bool</td><td>Masuk pada hari libur / bukan hari kerja</td></tr><tr><td><code>offsite_approval</code></td><td>enum</td><td><code>none</code> (tidak perlu / hanya ditandai) · <code>pending</code> · <code>approved</code> · <code>rejected</code></td></tr><tr><td><code>flags</code></td><td>string[]</td><td><code>missing_checkout</code> (lupa check-out) · <code>time_suspicious</code> (jam offline meragukan) · <code>low_accuracy</code> (GPS kurang akurat, data offline)</td></tr><tr><td><code>check_in</code> / <code>check_out</code></td><td>object | null</td><td><code>null</code> bila belum dilakukan (mis. status <code>alpha</code>, <code>izin</code>)</td></tr><tr><td><code>*.next_day</code></td><td>bool</td><td><code>true</code> bila terjadi di hari setelah <code>work_date</code> → tampilkan &quot;01:00 <strong>(+1)</strong>&quot;</td></tr><tr><td><code>*.mode</code></td><td>enum</td><td><code>onsite</code> (dalam radius) · <code>offsite</code> (luar lokasi)</td></tr><tr><td><code>*.distance_m</code></td><td>int</td><td>Jarak ke titik lokasi proyek terdekat (meter)</td></tr><tr><td><code>*.offline</code></td><td>bool</td><td>Dikirim lewat sinkron offline</td></tr><tr><td><code>*.uuid</code></td><td>string | null</td><td>UUID dari aplikasi; <code>null</code> untuk data hasil impor/koreksi admin</td></tr><tr><td><code>*.photo_url</code> / <code>thumb_url</code></td><td>url</td><td><strong>Butuh header Authorization</strong> (lihat <a href="#547-get-attendanceidphotoside">§5.4.7</a>)</td></tr></tbody></table></div><h3 id="43-leaverequest"><a class="anchor" href="#43-leaverequest" aria-hidden="true" tabindex="-1">#</a><span class="h-num">4.3</span> <code>LeaveRequest</code></h3><figure class="code"><figcaption><span>JSON</span><button type="button" class="copy">Salin</button></figcaption><pre><code>{
+  <span class="j-key">&quot;id&quot;</span>: <span class="j-num">2</span>, <span class="j-key">&quot;project_id&quot;</span>: <span class="j-num">1</span>, <span class="j-key">&quot;employee&quot;</span>: <span class="j-str">&quot;Agus Irawan&quot;</span>, <span class="j-key">&quot;type&quot;</span>: <span class="j-str">&quot;sakit&quot;</span>,
+  <span class="j-key">&quot;start_date&quot;</span>: <span class="j-str">&quot;2026-10-05&quot;</span>, <span class="j-key">&quot;end_date&quot;</span>: <span class="j-str">&quot;2026-10-06&quot;</span>,
+  <span class="j-key">&quot;reason&quot;</span>: <span class="j-str">&quot;Demam, surat dokter menyusul&quot;</span>, <span class="j-key">&quot;has_attachment&quot;</span>: <span class="j-lit">false</span>,
+  <span class="j-key">&quot;status&quot;</span>: <span class="j-str">&quot;pending&quot;</span>, <span class="j-key">&quot;approval_note&quot;</span>: <span class="j-lit">null</span>, <span class="j-key">&quot;approved_at&quot;</span>: <span class="j-lit">null</span>,
+  <span class="j-key">&quot;created_at&quot;</span>: <span class="j-str">&quot;2026-10-02T17:55:42+07:00&quot;</span>
+}</code></pre></figure><p><code>type</code>: <code>izin</code> · <code>sakit</code> · <code>cuti</code> — <code>status</code>: <code>pending</code> · <code>approved</code> · <code>rejected</code>.
+Saat disetujui, server otomatis mengisi presensi hari-hari tsb dengan status sesuai jenis (kecuali hari yang sudah ada check-in).</p>
+
+<h2 id="5-endpoint"><a class="anchor" href="#5-endpoint" aria-hidden="true" tabindex="-1">#</a><span class="h-num">5.</span> Endpoint</h2><p>Penulisan: <span class="auth auth-public">Publik</span> = publik (tanpa token), <span class="auth auth-token">Token</span> = butuh token, <span class="auth auth-tl">Team Leader</span> = khusus Team Leader proyek terkait.</p>
+<h3 id="51-publik"><a class="anchor" href="#51-publik" aria-hidden="true" tabindex="-1">#</a><span class="h-num">5.1</span> Publik</h3><h4 id="511-get-time" class="endpoint">
+                    <a class="anchor" href="#511-get-time" aria-label="Tautan ke GET /time">#</a>
+                    <span class="ep-num">5.1.1</span>
+                    <span class="method m-get">GET</span>
+                    <code class="ep-path">/time</code>
+                    <span class="auth auth-public">Publik</span>
+                </h4><p>Jam server untuk sinkronisasi jam terpercaya (lihat <a href="#63-mode-offline--jam-terpercaya">§6.3</a>).</p>
+<figure class="code"><figcaption><span>JSON</span><button type="button" class="copy">Salin</button></figcaption><pre><code>{
+  <span class="j-key">&quot;success&quot;</span>: <span class="j-lit">true</span>, <span class="j-key">&quot;message&quot;</span>: <span class="j-lit">null</span>, <span class="j-key">&quot;reason&quot;</span>: <span class="j-lit">null</span>,
+  <span class="j-key">&quot;data&quot;</span>: { <span class="j-key">&quot;server_time&quot;</span>: <span class="j-str">&quot;2026-10-02T17:50:56+07:00&quot;</span>, <span class="j-key">&quot;timestamp_ms&quot;</span>: <span class="j-num">1790938256259</span> },
+  <span class="j-key">&quot;errors&quot;</span>: <span class="j-lit">null</span>
+}</code></pre></figure><p><code>timestamp_ms</code> = epoch milidetik (UTC) — gunakan ini untuk menghitung selisih jam.</p>
+<h4 id="512-get-appinfo" class="endpoint">
+                    <a class="anchor" href="#512-get-appinfo" aria-label="Tautan ke GET /app/info">#</a>
+                    <span class="ep-num">5.1.2</span>
+                    <span class="method m-get">GET</span>
+                    <code class="ep-path">/app/info</code>
+                    <span class="auth auth-public">Publik</span>
+                </h4><p>Branding &amp; versi minimum aplikasi. Panggil saat aplikasi dibuka.</p>
+<figure class="code"><figcaption><span>JSON</span><button type="button" class="copy">Salin</button></figcaption><pre><code>{
+  <span class="j-key">&quot;success&quot;</span>: <span class="j-lit">true</span>, <span class="j-key">&quot;message&quot;</span>: <span class="j-lit">null</span>, <span class="j-key">&quot;reason&quot;</span>: <span class="j-lit">null</span>,
+  <span class="j-key">&quot;data&quot;</span>: {
+    <span class="j-key">&quot;app_name&quot;</span>: <span class="j-str">&quot;Presensi Proyek&quot;</span>,
+    <span class="j-key">&quot;company_name&quot;</span>: <span class="j-str">&quot;Nindya - ITP KSO&quot;</span>,
+    <span class="j-key">&quot;primary_color&quot;</span>: <span class="j-str">&quot;#1E5AA8&quot;</span>,
+    <span class="j-key">&quot;min_app_version&quot;</span>: <span class="j-str">&quot;1.0.0&quot;</span>
+  },
+  <span class="j-key">&quot;errors&quot;</span>: <span class="j-lit">null</span>
+}</code></pre></figure><p>Bila versi aplikasi &lt; <code>min_app_version</code> → tampilkan layar <strong>wajib update</strong> (blokir penggunaan).</p>
+<h4 id="513-post-authlogin" class="endpoint">
+                    <a class="anchor" href="#513-post-authlogin" aria-label="Tautan ke POST /auth/login">#</a>
+                    <span class="ep-num">5.1.3</span>
+                    <span class="method m-post">POST</span>
+                    <code class="ep-path">/auth/login</code>
+                    <span class="auth auth-public">Publik</span>
+                </h4><p><code>Content-Type: application/json</code></p>
+<div class="table-wrap"><table><thead><tr><th>Field</th><th>Wajib</th><th>Tipe</th><th>Keterangan</th></tr></thead><tbody><tr><td><code>username</code></td><td><span class="req" title="Wajib">✓</span></td><td>string</td><td></td></tr><tr><td><code>password</code></td><td><span class="req" title="Wajib">✓</span></td><td>string</td><td></td></tr><tr><td><code>device_id</code></td><td><span class="req" title="Wajib">✓</span></td><td>string ≤ 191</td><td>ID unik &amp; <strong>stabil</strong> per instalasi (simpan UUID di secure storage saat pertama kali dibuka; jangan pakai IMEI)</td></tr><tr><td><code>platform</code></td><td></td><td><code>android</code> | <code>ios</code></td><td></td></tr><tr><td><code>model</code></td><td></td><td>string</td><td>mis. <code>&quot;Samsung Galaxy A15&quot;</code></td></tr><tr><td><code>os_version</code></td><td></td><td>string</td><td>mis. <code>&quot;Android 14&quot;</code></td></tr><tr><td><code>app_version</code></td><td></td><td>string</td><td>mis. <code>&quot;1.0.0&quot;</code></td></tr></tbody></table></div><figure class="code"><figcaption><span>JSON</span><button type="button" class="copy">Salin</button></figcaption><pre><code>{
+  <span class="j-key">&quot;username&quot;</span>: <span class="j-str">&quot;agus.irawan&quot;</span>,
+  <span class="j-key">&quot;password&quot;</span>: <span class="j-str">&quot;Presensi#2026&quot;</span>,
+  <span class="j-key">&quot;device_id&quot;</span>: <span class="j-str">&quot;qa-device-agus-01&quot;</span>,
+  <span class="j-key">&quot;platform&quot;</span>: <span class="j-str">&quot;android&quot;</span>,
+  <span class="j-key">&quot;model&quot;</span>: <span class="j-str">&quot;Samsung Galaxy A15&quot;</span>,
+  <span class="j-key">&quot;os_version&quot;</span>: <span class="j-str">&quot;Android 14&quot;</span>,
+  <span class="j-key">&quot;app_version&quot;</span>: <span class="j-str">&quot;1.0.0&quot;</span>
+}</code></pre></figure><p><strong>200 OK</strong></p>
+<figure class="code"><figcaption><span>JSON</span><button type="button" class="copy">Salin</button></figcaption><pre><code>{
+  <span class="j-key">&quot;success&quot;</span>: <span class="j-lit">true</span>,
+  <span class="j-key">&quot;message&quot;</span>: <span class="j-str">&quot;Login berhasil.&quot;</span>,
+  <span class="j-key">&quot;reason&quot;</span>: <span class="j-lit">null</span>,
+  <span class="j-key">&quot;data&quot;</span>: {
+    <span class="j-key">&quot;token&quot;</span>: <span class="j-str">&quot;12|Xy...&quot;</span>,
+    <span class="j-key">&quot;token_type&quot;</span>: <span class="j-str">&quot;Bearer&quot;</span>,
+    <span class="j-key">&quot;profile&quot;</span>: { <span class="j-key">&quot;user&quot;</span>: { }, <span class="j-key">&quot;employee&quot;</span>: { }, <span class="j-key">&quot;projects&quot;</span>: [ ] }
+  },
+  <span class="j-key">&quot;errors&quot;</span>: <span class="j-lit">null</span>
+}</code></pre></figure><p><code>profile</code> = objek <a href="#41-profile"><code>Profile</code></a>. Simpan <code>token</code> di <strong>secure storage</strong> (Keychain / Keystore).</p>
+<p><strong>Error:</strong> <code>invalid_credentials</code> (401) · <code>inactive</code> (403) · <code>device_mismatch</code> (403) · <code>validation</code> (422) · <code>http_429</code>.</p>
+<figure class="code"><figcaption><span>JSON</span><button type="button" class="copy">Salin</button></figcaption><pre><code>{
+  <span class="j-key">&quot;success&quot;</span>: <span class="j-lit">false</span>,
+  <span class="j-key">&quot;message&quot;</span>: <span class="j-str">&quot;Akun ini sudah terdaftar di perangkat lain. Hubungi admin untuk reset perangkat.&quot;</span>,
+  <span class="j-key">&quot;reason&quot;</span>: <span class="j-str">&quot;device_mismatch&quot;</span>, <span class="j-key">&quot;data&quot;</span>: <span class="j-lit">null</span>, <span class="j-key">&quot;errors&quot;</span>: <span class="j-lit">null</span>
+}</code></pre></figure><p>Catatan: login ulang dari HP yang sama diperbolehkan dan <strong>mencabut token lama</strong> perangkat tsb.</p>
+<h3 id="52-akun"><a class="anchor" href="#52-akun" aria-hidden="true" tabindex="-1">#</a><span class="h-num">5.2</span> Akun</h3><h4 id="521-post-authlogout" class="endpoint">
+                    <a class="anchor" href="#521-post-authlogout" aria-label="Tautan ke POST /auth/logout">#</a>
+                    <span class="ep-num">5.2.1</span>
+                    <span class="method m-post">POST</span>
+                    <code class="ep-path">/auth/logout</code>
+                    <span class="auth auth-token">Token</span>
+                </h4><p>Mencabut token saat ini. Respons: <code>{ &quot;success&quot;: true, &quot;message&quot;: &quot;Logout berhasil.&quot;, ... }</code>.
+Perangkat tetap terikat ke akun (karyawan bisa login lagi di HP yang sama).</p>
+<h4 id="522-get-me" class="endpoint">
+                    <a class="anchor" href="#522-get-me" aria-label="Tautan ke GET /me">#</a>
+                    <span class="ep-num">5.2.2</span>
+                    <span class="method m-get">GET</span>
+                    <code class="ep-path">/me</code>
+                    <span class="auth auth-token">Token</span>
+                </h4><p>Mengembalikan <a href="#41-profile"><code>Profile</code></a>. Panggil saat aplikasi dibuka untuk menyegarkan daftar proyek.</p>
+<h4 id="523-post-mepassword" class="endpoint">
+                    <a class="anchor" href="#523-post-mepassword" aria-label="Tautan ke POST /me/password">#</a>
+                    <span class="ep-num">5.2.3</span>
+                    <span class="method m-post">POST</span>
+                    <code class="ep-path">/me/password</code>
+                    <span class="auth auth-token">Token</span>
+                </h4><div class="table-wrap"><table><thead><tr><th>Field</th><th>Wajib</th><th>Keterangan</th></tr></thead><tbody><tr><td><code>current_password</code></td><td><span class="req" title="Wajib">✓</span></td><td></td></tr><tr><td><code>password</code></td><td><span class="req" title="Wajib">✓</span></td><td>minimal 8 karakter</td></tr><tr><td><code>password_confirmation</code></td><td><span class="req" title="Wajib">✓</span></td><td>sama dengan <code>password</code></td></tr></tbody></table></div><p>Error salah password lama:</p>
+<figure class="code"><figcaption><span>JSON</span><button type="button" class="copy">Salin</button></figcaption><pre><code>{
+  <span class="j-key">&quot;success&quot;</span>: <span class="j-lit">false</span>, <span class="j-key">&quot;message&quot;</span>: <span class="j-str">&quot;Password saat ini salah.&quot;</span>, <span class="j-key">&quot;reason&quot;</span>: <span class="j-str">&quot;validation&quot;</span>, <span class="j-key">&quot;data&quot;</span>: <span class="j-lit">null</span>,
+  <span class="j-key">&quot;errors&quot;</span>: { <span class="j-key">&quot;current_password&quot;</span>: [<span class="j-str">&quot;Password saat ini salah.&quot;</span>] }
+}</code></pre></figure><h3 id="53-proyek"><a class="anchor" href="#53-proyek" aria-hidden="true" tabindex="-1">#</a><span class="h-num">5.3</span> Proyek</h3><h4 id="531-get-projectsidconfig" class="endpoint">
+                    <a class="anchor" href="#531-get-projectsidconfig" aria-label="Tautan ke GET /projects/{id}/config">#</a>
+                    <span class="ep-num">5.3.1</span>
+                    <span class="method m-get">GET</span>
+                    <code class="ep-path">/projects/{id}/config</code>
+                    <span class="auth auth-token">Token</span>
+                </h4><p>Konfigurasi proyek untuk validasi di aplikasi. <strong>Simpan (cache) di HP</strong> agar validasi radius tetap berjalan saat offline. Segarkan saat aplikasi dibuka &amp; setiap kali online.</p>
+<figure class="code"><figcaption><span>JSON</span><button type="button" class="copy">Salin</button></figcaption><pre><code>{
+  <span class="j-key">&quot;success&quot;</span>: <span class="j-lit">true</span>, <span class="j-key">&quot;message&quot;</span>: <span class="j-lit">null</span>, <span class="j-key">&quot;reason&quot;</span>: <span class="j-lit">null</span>,
+  <span class="j-key">&quot;data&quot;</span>: {
+    <span class="j-key">&quot;project&quot;</span>: { <span class="j-key">&quot;id&quot;</span>: <span class="j-num">1</span>, <span class="j-key">&quot;code&quot;</span>: <span class="j-str">&quot;KDR&quot;</span>, <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;Nindya - ITP KSO Kedurus&quot;</span>, <span class="j-key">&quot;timezone&quot;</span>: <span class="j-str">&quot;Asia/Jakarta&quot;</span> },
+    <span class="j-key">&quot;locations&quot;</span>: [
+      { <span class="j-key">&quot;id&quot;</span>: <span class="j-num">1</span>, <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;Kantor Proyek Kedurus&quot;</span>, <span class="j-key">&quot;latitude&quot;</span>: <span class="j-num">-7.3154</span>, <span class="j-key">&quot;longitude&quot;</span>: <span class="j-num">112.6855</span>, <span class="j-key">&quot;radius_m&quot;</span>: <span class="j-num">100</span> }
+    ],
+    <span class="j-key">&quot;shift&quot;</span>: {
+      <span class="j-key">&quot;id&quot;</span>: <span class="j-num">1</span>, <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;Jam Kerja Standard&quot;</span>, <span class="j-key">&quot;start_time&quot;</span>: <span class="j-str">&quot;08:00:00&quot;</span>, <span class="j-key">&quot;end_time&quot;</span>: <span class="j-str">&quot;17:00:00&quot;</span>,
+      <span class="j-key">&quot;late_enabled&quot;</span>: <span class="j-lit">false</span>, <span class="j-key">&quot;late_tolerance_min&quot;</span>: <span class="j-num">0</span>, <span class="j-key">&quot;checkin_open_time&quot;</span>: <span class="j-lit">null</span>, <span class="j-key">&quot;checkin_close_time&quot;</span>: <span class="j-lit">null</span>
+    },
+    <span class="j-key">&quot;rules&quot;</span>: {
+      <span class="j-key">&quot;offsite_allowed&quot;</span>: <span class="j-lit">false</span>,
+      <span class="j-key">&quot;offsite_requires_note&quot;</span>: <span class="j-lit">true</span>,
+      <span class="j-key">&quot;offsite_requires_approval&quot;</span>: <span class="j-lit">false</span>,
+      <span class="j-key">&quot;max_gps_accuracy_m&quot;</span>: <span class="j-num">50</span>,
+      <span class="j-key">&quot;block_mock_location&quot;</span>: <span class="j-lit">true</span>,
+      <span class="j-key">&quot;require_checkout_in_location&quot;</span>: <span class="j-lit">true</span>,
+      <span class="j-key">&quot;max_work_hours&quot;</span>: <span class="j-num">20</span>,
+      <span class="j-key">&quot;allow_offline&quot;</span>: <span class="j-lit">true</span>,
+      <span class="j-key">&quot;offline_max_hours&quot;</span>: <span class="j-num">72</span>,
+      <span class="j-key">&quot;working_days&quot;</span>: [<span class="j-num">1</span>, <span class="j-num">2</span>, <span class="j-num">3</span>, <span class="j-num">4</span>, <span class="j-num">5</span>, <span class="j-num">6</span>, <span class="j-num">7</span>]
+    },
+    <span class="j-key">&quot;holidays&quot;</span>: [],
+    <span class="j-key">&quot;is_team_leader&quot;</span>: <span class="j-lit">false</span>,
+    <span class="j-key">&quot;fetched_at&quot;</span>: <span class="j-str">&quot;2026-10-02T17:51:00+07:00&quot;</span>
+  },
+  <span class="j-key">&quot;errors&quot;</span>: <span class="j-lit">null</span>
+}</code></pre></figure><div class="table-wrap"><table><thead><tr><th>Field</th><th>Pemakaian di aplikasi</th></tr></thead><tbody><tr><td><code>locations[]</code></td><td>Hitung jarak (haversine, R = 6.371.000 m) ke setiap titik; ambil terdekat. Di dalam <code>radius_m</code> → mode Dalam Lokasi</td></tr><tr><td><code>rules.offsite_allowed</code></td><td>Bila <code>false</code> dan di luar radius → tombol presensi dinonaktifkan, tampilkan jarak. Bila <code>true</code> → izinkan dengan label <strong>Luar Lokasi</strong></td></tr><tr><td><code>rules.offsite_requires_note</code></td><td>Wajib isi keterangan saat Luar Lokasi</td></tr><tr><td><code>rules.offsite_requires_approval</code></td><td>Informasikan: &quot;presensi luar lokasi menunggu persetujuan TL&quot;</td></tr><tr><td><code>rules.max_gps_accuracy_m</code></td><td>Tunggu sampai akurasi GPS ≤ nilai ini sebelum mengizinkan presensi</td></tr><tr><td><code>rules.block_mock_location</code></td><td>Bila <code>true</code> dan lokasi palsu terdeteksi → blokir</td></tr><tr><td><code>rules.require_checkout_in_location</code></td><td>Bila <code>false</code>, check-out tidak perlu validasi radius</td></tr><tr><td><code>rules.max_work_hours</code></td><td>Batas jendela check-out sejak check-in (<a href="#64-shift-melewati-tengah-malam">§6.4</a>)</td></tr><tr><td><code>rules.allow_offline</code> / <code>offline_max_hours</code></td><td>Boleh menyimpan presensi saat offline &amp; batas umurnya</td></tr><tr><td><code>rules.working_days</code></td><td>1 = Senin … 7 = Minggu (ISO-8601)</td></tr><tr><td><code>holidays[]</code></td><td><code>{ date, name }</code> — hanya terisi bila proyek memakai libur nasional</td></tr><tr><td><code>shift.checkin_open_time</code> / <code>checkin_close_time</code></td><td>Jendela check-in (null = kapan saja)</td></tr></tbody></table></div><p>Error: <code>http_403</code> bila karyawan tidak terdaftar di proyek.</p>
+<h4 id="532-get-projectsidperiods" class="endpoint">
+                    <a class="anchor" href="#532-get-projectsidperiods" aria-label="Tautan ke GET /projects/{id}/periods">#</a>
+                    <span class="ep-num">5.3.2</span>
+                    <span class="method m-get">GET</span>
+                    <code class="ep-path">/projects/{id}/periods</code>
+                    <span class="auth auth-token">Token</span>
+                </h4><p>Daftar periode laporan (&quot;Bulan ke-N&quot;) dari terbaru, untuk filter riwayat.</p>
+<figure class="code"><figcaption><span>JSON</span><button type="button" class="copy">Salin</button></figcaption><pre><code>{
+  <span class="j-key">&quot;success&quot;</span>: <span class="j-lit">true</span>, <span class="j-key">&quot;message&quot;</span>: <span class="j-lit">null</span>, <span class="j-key">&quot;reason&quot;</span>: <span class="j-lit">null</span>,
+  <span class="j-key">&quot;data&quot;</span>: [
+    { <span class="j-key">&quot;index&quot;</span>: <span class="j-num">8</span>, <span class="j-key">&quot;label&quot;</span>: <span class="j-str">&quot;Bulan ke-8&quot;</span>, <span class="j-key">&quot;start&quot;</span>: <span class="j-str">&quot;2026-09-25&quot;</span>, <span class="j-key">&quot;end&quot;</span>: <span class="j-str">&quot;2026-10-26&quot;</span>, <span class="j-key">&quot;is_current&quot;</span>: <span class="j-lit">true</span> },
+    { <span class="j-key">&quot;index&quot;</span>: <span class="j-num">7</span>, <span class="j-key">&quot;label&quot;</span>: <span class="j-str">&quot;Bulan ke-7&quot;</span>, <span class="j-key">&quot;start&quot;</span>: <span class="j-str">&quot;2026-08-25&quot;</span>, <span class="j-key">&quot;end&quot;</span>: <span class="j-str">&quot;2026-09-26&quot;</span>, <span class="j-key">&quot;is_current&quot;</span>: <span class="j-lit">false</span> }
+  ],
+  <span class="j-key">&quot;errors&quot;</span>: <span class="j-lit">null</span>
+}</code></pre></figure><p>Periode berurutan bisa <strong>tumpang tindih</strong> (mis. 25–26 muncul di dua periode) — ini disengaja mengikuti format laporan proyek.</p>
+<h3 id="54-presensi"><a class="anchor" href="#54-presensi" aria-hidden="true" tabindex="-1">#</a><span class="h-num">5.4</span> Presensi</h3><h4 id="541-get-attendancetodayprojectidid" class="endpoint">
+                    <a class="anchor" href="#541-get-attendancetodayprojectidid" aria-label="Tautan ke GET /attendance/today?project_id={id}">#</a>
+                    <span class="ep-num">5.4.1</span>
+                    <span class="method m-get">GET</span>
+                    <code class="ep-path">/attendance/today?project_id={id}</code>
+                    <span class="auth auth-token">Token</span>
+                </h4><p>Status presensi hari ini — <strong>sumber kebenaran tombol di beranda</strong>.</p>
+<figure class="code"><figcaption><span>JSON</span><button type="button" class="copy">Salin</button></figcaption><pre><code>{
+  <span class="j-key">&quot;success&quot;</span>: <span class="j-lit">true</span>, <span class="j-key">&quot;message&quot;</span>: <span class="j-lit">null</span>, <span class="j-key">&quot;reason&quot;</span>: <span class="j-lit">null</span>,
+  <span class="j-key">&quot;data&quot;</span>: {
+    <span class="j-key">&quot;server_time&quot;</span>: <span class="j-str">&quot;2026-10-02T17:51:06+07:00&quot;</span>,
+    <span class="j-key">&quot;work_date&quot;</span>: <span class="j-str">&quot;2026-10-02&quot;</span>,
+    <span class="j-key">&quot;is_working_day&quot;</span>: <span class="j-lit">true</span>,
+    <span class="j-key">&quot;holiday&quot;</span>: <span class="j-lit">null</span>,
+    <span class="j-key">&quot;attendance&quot;</span>: { <span class="j-key">&quot;...&quot;</span>: <span class="j-str">&quot;objek Attendance hari ini atau null&quot;</span> },
+    <span class="j-key">&quot;open_attendance&quot;</span>: <span class="j-lit">null</span>
+  },
+  <span class="j-key">&quot;errors&quot;</span>: <span class="j-lit">null</span>
+}</code></pre></figure><div class="table-wrap"><table><thead><tr><th>Field</th><th>Keterangan</th></tr></thead><tbody><tr><td><code>attendance</code></td><td><a href="#42-attendance"><code>Attendance</code></a> untuk <code>work_date</code> hari ini, atau <code>null</code></td></tr><tr><td><code>open_attendance</code></td><td><a href="#42-attendance"><code>Attendance</code></a> dari <strong>hari sebelumnya</strong> yang belum check-out dan masih dalam <code>max_work_hours</code>, atau <code>null</code></td></tr><tr><td><code>is_working_day</code> / <code>holiday</code></td><td>Informasi hari kerja &amp; nama hari libur</td></tr></tbody></table></div><p><strong>Logika tombol beranda:</strong></p>
+<div class="table-wrap"><table><thead><tr><th>Kondisi</th><th>Tampilkan</th></tr></thead><tbody><tr><td><code>open_attendance != null</code></td><td>Tombol <strong>Check-out</strong> untuk shift <code>open_attendance.work_date</code> (mis. &quot;Check-out shift 2 Okt&quot;)</td></tr><tr><td><code>attendance == null</code></td><td>Tombol <strong>Check-in</strong></td></tr><tr><td><code>attendance.check_in != null</code> &amp; <code>check_out == null</code></td><td>Tombol <strong>Check-out</strong></td></tr><tr><td><code>attendance.check_out != null</code></td><td>Ringkasan hari ini (selesai)</td></tr><tr><td><code>attendance.status</code> ∈ izin/sakit/cuti</td><td>Info &quot;Anda sedang izin/sakit/cuti&quot; (check-in tetap boleh)</td></tr></tbody></table></div><h4 id="542-post-attendancecheck-in" class="endpoint">
+                    <a class="anchor" href="#542-post-attendancecheck-in" aria-label="Tautan ke POST /attendance/check-in">#</a>
+                    <span class="ep-num">5.4.2</span>
+                    <span class="method m-post">POST</span>
+                    <code class="ep-path">/attendance/check-in</code>
+                    <span class="auth auth-token">Token</span>
+                </h4><p><code>Content-Type: multipart/form-data</code></p>
+<div class="table-wrap"><table><thead><tr><th>Field</th><th>Wajib</th><th>Tipe</th><th>Keterangan</th></tr></thead><tbody><tr><td><code>uuid</code></td><td><span class="req" title="Wajib">✓</span></td><td>UUID v4</td><td><strong>Dibuat aplikasi</strong> per aksi presensi. Kirim ulang dengan uuid sama = aman (tidak dobel)</td></tr><tr><td><code>project_id</code></td><td><span class="req" title="Wajib">✓</span></td><td>int</td><td></td></tr><tr><td><code>latitude</code></td><td><span class="req" title="Wajib">✓</span></td><td>number −90..90</td><td></td></tr><tr><td><code>longitude</code></td><td><span class="req" title="Wajib">✓</span></td><td>number −180..180</td><td></td></tr><tr><td><code>accuracy</code></td><td></td><td>number ≥ 0</td><td>Akurasi GPS (meter)</td></tr><tr><td><code>is_mock</code></td><td></td><td>bool</td><td>Hasil deteksi lokasi palsu (Android: <code>Position.isMocked</code>)</td></tr><tr><td><code>note</code></td><td></td><td>string ≤ 255</td><td>Wajib bila Luar Lokasi &amp; <code>offsite_requires_note</code></td></tr><tr><td><code>photo</code></td><td><span class="req" title="Wajib">✓</span></td><td>jpg/jpeg/png ≤ 5 MB</td><td>Selfie kamera depan (kompres ±300 KB, lebar ±1080 px)</td></tr><tr><td><code>device</code></td><td></td><td>JSON string</td><td><code>{&quot;model&quot;,&quot;os&quot;,&quot;app_version&quot;}</code></td></tr><tr><td><code>is_offline</code></td><td></td><td>bool</td><td><code>true</code> hanya untuk data dari antrean offline</td></tr><tr><td><code>captured_at</code></td><td>jika offline</td><td>ISO 8601</td><td>Waktu terpercaya saat presensi diambil (<a href="#63-mode-offline--jam-terpercaya">§6.3</a>)</td></tr><tr><td><code>device_time</code></td><td></td><td>ISO 8601</td><td>Jam HP saat itu (audit)</td></tr><tr><td><code>flags</code></td><td></td><td>JSON string array</td><td>mis. <code>[&quot;time_suspicious&quot;]</code> bila HP reboot sejak sinkron jam terakhir</td></tr><tr><td><code>abandon_previous</code></td><td></td><td>bool</td><td><code>true</code> = shift kemarin ditandai lupa check-out lalu presensi baru dibuat (<a href="#64-shift-melewati-tengah-malam">§6.4</a>)</td></tr></tbody></table></div><p>Contoh (cURL):</p>
+<figure class="code"><figcaption><span>Shell</span><button type="button" class="copy">Salin</button></figcaption><pre><code>curl <span class="s-flag">-X</span> POST &quot;<span class="s-var">$BASE</span>/attendance/check-in&quot; \
+  <span class="s-flag">-H</span> &quot;Accept: application/json&quot; <span class="s-flag">-H</span> &quot;Authorization: Bearer <span class="s-var">$TOKEN</span>&quot; \
+  <span class="s-flag">-F</span> uuid=5b8073b4-41da-4fe7-8e22-1cfc1726844d <span class="s-flag">-F</span> project_id=1 \
+  <span class="s-flag">-F</span> latitude=-7.31545 <span class="s-flag">-F</span> longitude=112.68552 <span class="s-flag">-F</span> accuracy=8.5 <span class="s-flag">-F</span> is_mock=false \
+  <span class="s-flag">-F</span> 'device={&quot;model&quot;:&quot;Samsung Galaxy A15&quot;,&quot;os&quot;:&quot;Android 14&quot;,&quot;app_version&quot;:&quot;1.0.0&quot;}' \
+  <span class="s-flag">-F</span> photo=@selfie.jpg</code></pre></figure><p><strong>201 Created</strong> (atau <strong>200</strong> bila uuid yang sama dikirim ulang):</p>
+<figure class="code"><figcaption><span>JSON</span><button type="button" class="copy">Salin</button></figcaption><pre><code>{
+  <span class="j-key">&quot;success&quot;</span>: <span class="j-lit">true</span>,
+  <span class="j-key">&quot;message&quot;</span>: <span class="j-str">&quot;Check-in berhasil.&quot;</span>,
+  <span class="j-key">&quot;reason&quot;</span>: <span class="j-lit">null</span>,
+  <span class="j-key">&quot;data&quot;</span>: { <span class="j-key">&quot;id&quot;</span>: <span class="j-num">277</span>, <span class="j-key">&quot;work_date&quot;</span>: <span class="j-str">&quot;2026-10-02&quot;</span>, <span class="j-key">&quot;status&quot;</span>: <span class="j-str">&quot;hadir&quot;</span>, <span class="j-key">&quot;...&quot;</span>: <span class="j-str">&quot;objek Attendance lengkap&quot;</span> },
+  <span class="j-key">&quot;errors&quot;</span>: <span class="j-lit">null</span>
+}</code></pre></figure><p>Bila Luar Lokasi, <code>message</code> menjadi <code>&quot;Check-in berhasil. (Luar Lokasi)&quot;</code> dan <code>check_in.mode = &quot;offsite&quot;</code>.</p>
+<p><strong>Contoh error:</strong></p>
+<figure class="code"><figcaption><span>JSON</span><button type="button" class="copy">Salin</button></figcaption><pre><code>{
+  <span class="j-key">&quot;success&quot;</span>: <span class="j-lit">false</span>,
+  <span class="j-key">&quot;message&quot;</span>: <span class="j-str">&quot;Anda berada 500 m dari Kantor Proyek Kedurus (radius 100 m).&quot;</span>,
+  <span class="j-key">&quot;reason&quot;</span>: <span class="j-str">&quot;outside_radius&quot;</span>,
+  <span class="j-key">&quot;data&quot;</span>: { <span class="j-key">&quot;distance_m&quot;</span>: <span class="j-num">500</span>, <span class="j-key">&quot;radius_m&quot;</span>: <span class="j-num">100</span> },
+  <span class="j-key">&quot;errors&quot;</span>: <span class="j-lit">null</span>
+}</code></pre></figure><figure class="code"><figcaption><span>JSON</span><button type="button" class="copy">Salin</button></figcaption><pre><code>{
+  <span class="j-key">&quot;success&quot;</span>: <span class="j-lit">false</span>,
+  <span class="j-key">&quot;message&quot;</span>: <span class="j-str">&quot;Akurasi GPS terlalu rendah (120 m). Pindah ke area terbuka dan coba lagi.&quot;</span>,
+  <span class="j-key">&quot;reason&quot;</span>: <span class="j-str">&quot;low_accuracy&quot;</span>,
+  <span class="j-key">&quot;data&quot;</span>: { <span class="j-key">&quot;accuracy&quot;</span>: <span class="j-num">120</span>, <span class="j-key">&quot;max&quot;</span>: <span class="j-num">50</span> },
+  <span class="j-key">&quot;errors&quot;</span>: <span class="j-lit">null</span>
+}</code></pre></figure><figure class="code"><figcaption><span>JSON</span><button type="button" class="copy">Salin</button></figcaption><pre><code>{
+  <span class="j-key">&quot;success&quot;</span>: <span class="j-lit">false</span>, <span class="j-key">&quot;message&quot;</span>: <span class="j-str">&quot;UUID harus berupa UUID yang valid.&quot;</span>, <span class="j-key">&quot;reason&quot;</span>: <span class="j-str">&quot;validation&quot;</span>, <span class="j-key">&quot;data&quot;</span>: <span class="j-lit">null</span>,
+  <span class="j-key">&quot;errors&quot;</span>: {
+    <span class="j-key">&quot;uuid&quot;</span>: [<span class="j-str">&quot;UUID harus berupa UUID yang valid.&quot;</span>],
+    <span class="j-key">&quot;latitude&quot;</span>: [<span class="j-str">&quot;Latitude wajib diisi.&quot;</span>],
+    <span class="j-key">&quot;longitude&quot;</span>: [<span class="j-str">&quot;Longitude wajib diisi.&quot;</span>],
+    <span class="j-key">&quot;photo&quot;</span>: [<span class="j-str">&quot;Foto wajib diisi.&quot;</span>]
+  }
+}</code></pre></figure><p>Error lain: <code>mock_location</code>, <code>not_assigned</code>, <code>note_required</code>, <code>checkin_not_open</code>, <code>checkin_closed</code>, <code>already_checked_in</code>, <code>open_previous_shift</code>, <code>offline_not_allowed</code>, <code>offline_expired</code>, <code>invalid_time</code>.</p>
+<h4 id="543-post-attendancecheck-out" class="endpoint">
+                    <a class="anchor" href="#543-post-attendancecheck-out" aria-label="Tautan ke POST /attendance/check-out">#</a>
+                    <span class="ep-num">5.4.3</span>
+                    <span class="method m-post">POST</span>
+                    <code class="ep-path">/attendance/check-out</code>
+                    <span class="auth auth-token">Token</span>
+                </h4><p>Field <strong>sama dengan check-in</strong> (kecuali <code>abandon_previous</code> tidak dipakai). Server otomatis menutup check-in terbuka terbaru dalam <code>max_work_hours</code> — termasuk shift kemarin bila check-out dilakukan lewat tengah malam.</p>
+<p><strong>200 OK</strong> — objek <a href="#42-attendance"><code>Attendance</code></a> dengan <code>check_out</code>, <code>duration_minutes</code>, <code>duration_label</code> terisi.</p>
+<p>Error: <code>no_checkin</code>, <code>already_checked_out</code>, <code>outside_radius</code> (bila <code>require_checkout_in_location</code>), <code>mock_location</code>, <code>low_accuracy</code>, <code>offline_*</code>, <code>invalid_time</code>.</p>
+<h4 id="544-post-attendancesync" class="endpoint">
+                    <a class="anchor" href="#544-post-attendancesync" aria-label="Tautan ke POST /attendance/sync">#</a>
+                    <span class="ep-num">5.4.4</span>
+                    <span class="method m-post">POST</span>
+                    <code class="ep-path">/attendance/sync</code>
+                    <span class="auth auth-token">Token</span>
+                </h4><p>Kirim antrean presensi offline secara <strong>batch berurutan</strong> (maks. 20 item per request).</p>
+<p><code>Content-Type: multipart/form-data</code> — setiap item memakai prefiks <code>items[i][...]</code>:</p>
+<div class="table-wrap"><table><thead><tr><th>Field</th><th>Keterangan</th></tr></thead><tbody><tr><td><code>items[i][type]</code></td><td><code>check_in</code> atau <code>check_out</code> (wajib)</td></tr><tr><td><code>items[i][...]</code></td><td>Semua field check-in/check-out (<a href="#542-post-attendancecheck-in">§5.4.2</a>), termasuk <code>photo</code></td></tr><tr><td><code>items[i][is_offline]</code></td><td>Default <code>true</code> bila tidak dikirim</td></tr><tr><td><code>items[i][captured_at]</code></td><td>Wajib untuk item offline</td></tr></tbody></table></div><p>Contoh field multipart:</p>
+<figure class="code"><figcaption><span>Teks</span><button type="button" class="copy">Salin</button></figcaption><pre><code>items[0][type]=check_in
+items[0][uuid]=5878480f-d5e0-45a6-ba41-63006b9749fe
+items[0][project_id]=1
+items[0][latitude]=-7.31545
+items[0][longitude]=112.68552
+items[0][accuracy]=8.5
+items[0][captured_at]=2026-10-01T01:02:00.000Z
+items[0][photo]=&lt;file&gt;
+items[1][type]=check_out
+items[1][uuid]=c54b627a-9acc-41d3-8019-61ebe52c2eed
+...</code></pre></figure><p><strong>200 OK</strong> — hasil <strong>per item</strong>, urutan sama dengan kiriman:</p>
+<figure class="code"><figcaption><span>JSON</span><button type="button" class="copy">Salin</button></figcaption><pre><code>{
+  <span class="j-key">&quot;success&quot;</span>: <span class="j-lit">true</span>, <span class="j-key">&quot;message&quot;</span>: <span class="j-lit">null</span>, <span class="j-key">&quot;reason&quot;</span>: <span class="j-lit">null</span>,
+  <span class="j-key">&quot;data&quot;</span>: [
+    { <span class="j-key">&quot;uuid&quot;</span>: <span class="j-str">&quot;5878480f-…&quot;</span>, <span class="j-key">&quot;type&quot;</span>: <span class="j-str">&quot;check_in&quot;</span>,  <span class="j-key">&quot;success&quot;</span>: <span class="j-lit">true</span>, <span class="j-key">&quot;data&quot;</span>: { <span class="j-key">&quot;id&quot;</span>: <span class="j-num">274</span>, <span class="j-key">&quot;work_date&quot;</span>: <span class="j-str">&quot;2026-10-01&quot;</span>, <span class="j-key">&quot;...&quot;</span>: <span class="j-str">&quot;Attendance&quot;</span> } },
+    { <span class="j-key">&quot;uuid&quot;</span>: <span class="j-str">&quot;c54b627a-…&quot;</span>, <span class="j-key">&quot;type&quot;</span>: <span class="j-str">&quot;check_out&quot;</span>, <span class="j-key">&quot;success&quot;</span>: <span class="j-lit">true</span>, <span class="j-key">&quot;data&quot;</span>: { <span class="j-key">&quot;id&quot;</span>: <span class="j-num">274</span>, <span class="j-key">&quot;work_date&quot;</span>: <span class="j-str">&quot;2026-10-01&quot;</span>, <span class="j-key">&quot;...&quot;</span>: <span class="j-str">&quot;Attendance&quot;</span> } },
+    { <span class="j-key">&quot;uuid&quot;</span>: <span class="j-str">&quot;2702c624-…&quot;</span>, <span class="j-key">&quot;type&quot;</span>: <span class="j-str">&quot;check_in&quot;</span>,  <span class="j-key">&quot;success&quot;</span>: <span class="j-lit">false</span>, <span class="j-key">&quot;reason&quot;</span>: <span class="j-str">&quot;offline_expired&quot;</span>,
+      <span class="j-key">&quot;message&quot;</span>: <span class="j-str">&quot;Data offline lebih dari 72 jam, tidak dapat diterima. Hubungi admin.&quot;</span> }
+  ],
+  <span class="j-key">&quot;errors&quot;</span>: <span class="j-lit">null</span>
+}</code></pre></figure><p>Penanganan hasil per item:</p>
+<div class="table-wrap"><table><thead><tr><th>Hasil</th><th>Tindakan</th></tr></thead><tbody><tr><td><code>success: true</code></td><td>Hapus dari antrean, simpan <code>data</code> ke cache riwayat</td></tr><tr><td><code>reason</code> ∈ <code>offline_expired</code>, <code>invalid_time</code>, <code>outside_radius</code>, <code>mock_location</code>, <code>not_assigned</code>, <code>already_checked_in</code>, <code>already_checked_out</code>, <code>validation</code>, <code>forbidden</code>, <code>offline_not_allowed</code>, <code>note_required</code></td><td><strong>Permanen</strong> — hapus dari antrean, tampilkan di layar &quot;Data tidak terkirim&quot; beserta <code>message</code></td></tr><tr><td><code>no_checkin</code> pada <code>check_out</code></td><td>Bila item <code>check_in</code> pasangannya masih di antrean, kirim ulang nanti; bila tidak, perlakukan permanen</td></tr><tr><td>HTTP 5xx / jaringan putus</td><td>Simpan di antrean, coba lagi (backoff)</td></tr></tbody></table></div><p>Data offline yang tiba terlambat <strong>menimpa</strong> status <code>alpha</code> yang sudah dibuat sistem untuk tanggal tsb.</p>
+<h4 id="545-get-attendancehistory" class="endpoint">
+                    <a class="anchor" href="#545-get-attendancehistory" aria-label="Tautan ke GET /attendance/history">#</a>
+                    <span class="ep-num">5.4.5</span>
+                    <span class="method m-get">GET</span>
+                    <code class="ep-path">/attendance/history</code>
+                    <span class="auth auth-token">Token</span>
+                </h4><div class="table-wrap"><table><thead><tr><th>Query</th><th>Wajib</th><th>Keterangan</th></tr></thead><tbody><tr><td><code>project_id</code></td><td><span class="req" title="Wajib">✓</span></td><td></td></tr><tr><td><code>from</code>, <code>to</code></td><td></td><td>Rentang tanggal (maks. 93 hari). Bila kosong → <strong>periode berjalan</strong></td></tr></tbody></table></div><figure class="code"><figcaption><span>JSON</span><button type="button" class="copy">Salin</button></figcaption><pre><code>{
+  <span class="j-key">&quot;success&quot;</span>: <span class="j-lit">true</span>, <span class="j-key">&quot;message&quot;</span>: <span class="j-lit">null</span>, <span class="j-key">&quot;reason&quot;</span>: <span class="j-lit">null</span>,
+  <span class="j-key">&quot;data&quot;</span>: {
+    <span class="j-key">&quot;from&quot;</span>: <span class="j-str">&quot;2026-03-20&quot;</span>,
+    <span class="j-key">&quot;to&quot;</span>: <span class="j-str">&quot;2026-03-21&quot;</span>,
+    <span class="j-key">&quot;summary&quot;</span>: { <span class="j-key">&quot;hadir&quot;</span>: <span class="j-num">2</span> },
+    <span class="j-key">&quot;items&quot;</span>: [ { <span class="j-key">&quot;id&quot;</span>: <span class="j-num">216</span>, <span class="j-key">&quot;work_date&quot;</span>: <span class="j-str">&quot;2026-03-21&quot;</span>, <span class="j-key">&quot;status&quot;</span>: <span class="j-str">&quot;hadir&quot;</span>, <span class="j-key">&quot;...&quot;</span>: <span class="j-str">&quot;Attendance&quot;</span> } ]
+  },
+  <span class="j-key">&quot;errors&quot;</span>: <span class="j-lit">null</span>
+}</code></pre></figure><p><code>summary</code> = objek jumlah per status (kunci hanya muncul bila ada; <code>{}</code> bila kosong). <code>items</code> urut tanggal terbaru dulu. Gunakan <code>GET /projects/{id}/periods</code> untuk pilihan &quot;Bulan ke-N&quot;.</p>
+<h4 id="546-get-attendanceid" class="endpoint">
+                    <a class="anchor" href="#546-get-attendanceid" aria-label="Tautan ke GET /attendance/{id}">#</a>
+                    <span class="ep-num">5.4.6</span>
+                    <span class="method m-get">GET</span>
+                    <code class="ep-path">/attendance/{id}</code>
+                    <span class="auth auth-token">Token</span>
+                </h4><p>Detail satu presensi (<a href="#42-attendance"><code>Attendance</code></a> + <code>employee</code>). Hanya pemilik atau Team Leader proyek tsb (lainnya <code>http_403</code>).</p>
+<h4 id="547-get-attendanceidphotoside" class="endpoint">
+                    <a class="anchor" href="#547-get-attendanceidphotoside" aria-label="Tautan ke GET /attendance/{id}/photo/{side}">#</a>
+                    <span class="ep-num">5.4.7</span>
+                    <span class="method m-get">GET</span>
+                    <code class="ep-path">/attendance/{id}/photo/{side}</code>
+                    <span class="auth auth-token">Token</span>
+                </h4><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Keterangan</th></tr></thead><tbody><tr><td><code>side</code></td><td><code>in</code> atau <code>out</code></td></tr><tr><td><code>?thumb=1</code></td><td>Thumbnail ±160 px (untuk daftar)</td></tr></tbody></table></div><p>Respons berupa <strong>gambar JPEG</strong> (bukan JSON), <code>Cache-Control: private, max-age=86400</code>. Karena butuh token, muat dengan header, mis. di Flutter:</p>
+<figure class="code"><figcaption><span>Dart</span><button type="button" class="copy">Salin</button></figcaption><pre><code>Image.network(attendance.checkIn.thumbUrl, headers: {'Authorization': 'Bearer $token'})
+// atau CachedNetworkImage(imageUrl: ..., httpHeaders: {...})</code></pre></figure><p>Hak akses sama dengan detail presensi. <code>404</code> bila foto tidak ada (mis. data impor/manual).</p>
+<h3 id="55-izin--sakit--cuti"><a class="anchor" href="#55-izin--sakit--cuti" aria-hidden="true" tabindex="-1">#</a><span class="h-num">5.5</span> Izin / sakit / cuti</h3><h4 id="551-get-leave-requestsprojectidid" class="endpoint">
+                    <a class="anchor" href="#551-get-leave-requestsprojectidid" aria-label="Tautan ke GET /leave-requests?project_id={id}">#</a>
+                    <span class="ep-num">5.5.1</span>
+                    <span class="method m-get">GET</span>
+                    <code class="ep-path">/leave-requests?project_id={id}</code>
+                    <span class="auth auth-token">Token</span>
+                </h4><p>Daftar pengajuan milik karyawan (maks. 100, terbaru dulu) — array <a href="#43-leaverequest"><code>LeaveRequest</code></a>.</p>
+<h4 id="552-post-leave-requests" class="endpoint">
+                    <a class="anchor" href="#552-post-leave-requests" aria-label="Tautan ke POST /leave-requests">#</a>
+                    <span class="ep-num">5.5.2</span>
+                    <span class="method m-post">POST</span>
+                    <code class="ep-path">/leave-requests</code>
+                    <span class="auth auth-token">Token</span>
+                </h4><p><code>multipart/form-data</code> (atau JSON bila tanpa lampiran)</p>
+<div class="table-wrap"><table><thead><tr><th>Field</th><th>Wajib</th><th>Keterangan</th></tr></thead><tbody><tr><td><code>project_id</code></td><td><span class="req" title="Wajib">✓</span></td><td></td></tr><tr><td><code>type</code></td><td><span class="req" title="Wajib">✓</span></td><td><code>izin</code> · <code>sakit</code> · <code>cuti</code></td></tr><tr><td><code>start_date</code></td><td><span class="req" title="Wajib">✓</span></td><td><code>YYYY-MM-DD</code></td></tr><tr><td><code>end_date</code></td><td><span class="req" title="Wajib">✓</span></td><td>≥ <code>start_date</code></td></tr><tr><td><code>reason</code></td><td><span class="req" title="Wajib">✓</span></td><td>≤ 1000 karakter</td></tr><tr><td><code>attachment</code></td><td></td><td>jpg/jpeg/png/pdf ≤ 5 MB (mis. surat dokter)</td></tr></tbody></table></div><p><strong>201 Created</strong> — <a href="#43-leaverequest"><code>LeaveRequest</code></a> dengan <code>status: &quot;pending&quot;</code>.
+Error: <code>overlap</code> (422) bila bertabrakan dengan pengajuan pending/disetujui.</p>
+<h3 id="56-team-leader"><a class="anchor" href="#56-team-leader" aria-hidden="true" tabindex="-1">#</a><span class="h-num">5.6</span> Team Leader</h3><p>Semua endpoint di bagian ini <span class="auth auth-tl">Team Leader</span> — hanya untuk karyawan dengan <code>is_team_leader: true</code> di proyek terkait; lainnya <code>http_403</code> (&quot;Khusus Team Leader proyek ini.&quot;).</p>
+<h4 id="561-get-teamtodayprojectidid" class="endpoint">
+                    <a class="anchor" href="#561-get-teamtodayprojectidid" aria-label="Tautan ke GET /team/today?project_id={id}">#</a>
+                    <span class="ep-num">5.6.1</span>
+                    <span class="method m-get">GET</span>
+                    <code class="ep-path">/team/today?project_id={id}</code>
+                    <span class="auth auth-tl">Team Leader</span>
+                </h4><figure class="code"><figcaption><span>JSON</span><button type="button" class="copy">Salin</button></figcaption><pre><code>{
+  <span class="j-key">&quot;success&quot;</span>: <span class="j-lit">true</span>, <span class="j-key">&quot;message&quot;</span>: <span class="j-lit">null</span>, <span class="j-key">&quot;reason&quot;</span>: <span class="j-lit">null</span>,
+  <span class="j-key">&quot;data&quot;</span>: {
+    <span class="j-key">&quot;date&quot;</span>: <span class="j-str">&quot;2026-10-02&quot;</span>,
+    <span class="j-key">&quot;summary&quot;</span>: { <span class="j-key">&quot;total&quot;</span>: <span class="j-num">9</span>, <span class="j-key">&quot;checked_in&quot;</span>: <span class="j-num">1</span>, <span class="j-key">&quot;offsite&quot;</span>: <span class="j-num">0</span>, <span class="j-key">&quot;late&quot;</span>: <span class="j-num">0</span> },
+    <span class="j-key">&quot;members&quot;</span>: [
+      { <span class="j-key">&quot;employee_id&quot;</span>: <span class="j-num">8</span>, <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;Agus Irawan&quot;</span>, <span class="j-key">&quot;position&quot;</span>: <span class="j-str">&quot;Juru Ukur 1&quot;</span>, <span class="j-key">&quot;attendance&quot;</span>: { <span class="j-key">&quot;...&quot;</span>: <span class="j-str">&quot;Attendance&quot;</span> } },
+      { <span class="j-key">&quot;employee_id&quot;</span>: <span class="j-num">4</span>, <span class="j-key">&quot;name&quot;</span>: <span class="j-str">&quot;Bambang Rianto, S.T.&quot;</span>, <span class="j-key">&quot;position&quot;</span>: <span class="j-str">&quot;Ahli Hidromekanikal&quot;</span>, <span class="j-key">&quot;attendance&quot;</span>: <span class="j-lit">null</span> }
+    ]
+  },
+  <span class="j-key">&quot;errors&quot;</span>: <span class="j-lit">null</span>
+}</code></pre></figure><p><code>members</code> urut nama; <code>attendance: null</code> = belum presensi.</p>
+<h4 id="562-get-approvals" class="endpoint">
+                    <a class="anchor" href="#562-get-approvals" aria-label="Tautan ke GET /approvals">#</a>
+                    <span class="ep-num">5.6.2</span>
+                    <span class="method m-get">GET</span>
+                    <code class="ep-path">/approvals</code>
+                    <span class="auth auth-tl">Team Leader</span>
+                </h4><p>Semua yang menunggu persetujuan di proyek-proyek tempat pengguna menjadi TL.</p>
+<figure class="code"><figcaption><span>JSON</span><button type="button" class="copy">Salin</button></figcaption><pre><code>{
+  <span class="j-key">&quot;success&quot;</span>: <span class="j-lit">true</span>, <span class="j-key">&quot;message&quot;</span>: <span class="j-lit">null</span>, <span class="j-key">&quot;reason&quot;</span>: <span class="j-lit">null</span>,
+  <span class="j-key">&quot;data&quot;</span>: {
+    <span class="j-key">&quot;leave_requests&quot;</span>: [ { <span class="j-key">&quot;id&quot;</span>: <span class="j-num">2</span>, <span class="j-key">&quot;employee&quot;</span>: <span class="j-str">&quot;Agus Irawan&quot;</span>, <span class="j-key">&quot;type&quot;</span>: <span class="j-str">&quot;sakit&quot;</span>, <span class="j-key">&quot;status&quot;</span>: <span class="j-str">&quot;pending&quot;</span>, <span class="j-key">&quot;...&quot;</span>: <span class="j-str">&quot;LeaveRequest&quot;</span> } ],
+    <span class="j-key">&quot;offsite_attendances&quot;</span>: [ ]
+  },
+  <span class="j-key">&quot;errors&quot;</span>: <span class="j-lit">null</span>
+}</code></pre></figure><p><code>offsite_attendances</code> (objek <a href="#42-attendance"><code>Attendance</code></a> + <code>employee</code>) hanya terisi bila proyek mengaktifkan persetujuan luar lokasi.</p>
+<h4 id="563-patch-approvalsleaveid" class="endpoint">
+                    <a class="anchor" href="#563-patch-approvalsleaveid" aria-label="Tautan ke PATCH /approvals/leave/{id}">#</a>
+                    <span class="ep-num">5.6.3</span>
+                    <span class="method m-patch">PATCH</span>
+                    <code class="ep-path">/approvals/leave/{id}</code>
+                    <span class="auth auth-tl">Team Leader</span>
+                </h4><figure class="code"><figcaption><span>JSON</span><button type="button" class="copy">Salin</button></figcaption><pre><code>{ <span class="j-key">&quot;action&quot;</span>: <span class="j-str">&quot;approve&quot;</span>, <span class="j-key">&quot;note&quot;</span>: <span class="j-str">&quot;Semoga lekas sembuh&quot;</span> }</code></pre></figure><div class="table-wrap"><table><thead><tr><th>Field</th><th>Wajib</th><th>Keterangan</th></tr></thead><tbody><tr><td><code>action</code></td><td><span class="req" title="Wajib">✓</span></td><td><code>approve</code> · <code>reject</code></td></tr><tr><td><code>note</code></td><td></td><td>≤ 500 karakter</td></tr></tbody></table></div><p><strong>200 OK</strong> — <a href="#43-leaverequest"><code>LeaveRequest</code></a> terbaru (<code>status: &quot;approved&quot;</code>, <code>approval_note</code>, <code>approved_at</code>). Error: <code>already_processed</code> (409).</p>
+<h4 id="564-patch-approvalsoffsiteid" class="endpoint">
+                    <a class="anchor" href="#564-patch-approvalsoffsiteid" aria-label="Tautan ke PATCH /approvals/offsite/{id}">#</a>
+                    <span class="ep-num">5.6.4</span>
+                    <span class="method m-patch">PATCH</span>
+                    <code class="ep-path">/approvals/offsite/{id}</code>
+                    <span class="auth auth-tl">Team Leader</span>
+                </h4><p>Body sama dengan 5.6.3, <code>{id}</code> = id presensi. <strong>200 OK</strong> — <a href="#42-attendance"><code>Attendance</code></a> dengan <code>offsite_approval</code> = <code>approved</code> / <code>rejected</code>. Error: <code>already_processed</code> (409) bila tidak sedang <code>pending</code>.</p>
+
+<h2 id="6-alur-yang-wajib-diikuti-aplikasi"><a class="anchor" href="#6-alur-yang-wajib-diikuti-aplikasi" aria-hidden="true" tabindex="-1">#</a><span class="h-num">6.</span> Alur yang wajib diikuti aplikasi</h2><h3 id="61-saat-aplikasi-dibuka"><a class="anchor" href="#61-saat-aplikasi-dibuka" aria-hidden="true" tabindex="-1">#</a><span class="h-num">6.1</span> Saat aplikasi dibuka</h3><div class="diagram"><pre class="mermaid">sequenceDiagram
+    participant App
+    participant API
+    App-&gt;&gt;API: GET /app/info
+    alt versi &lt; min_app_version
+        App--&gt;&gt;App: Layar wajib update
+    end
+    App-&gt;&gt;API: GET /time (simpan offset jam)
+    App-&gt;&gt;API: GET /me (token tersimpan)
+    alt 401
+        App--&gt;&gt;App: Ke layar login
+    end
+    App-&gt;&gt;API: GET /projects/{id}/config (simpan ke cache)
+    App-&gt;&gt;API: GET /attendance/today?project_id={id}
+    App-&gt;&gt;API: POST /attendance/sync (bila antrean offline ada isi)</pre></div><h3 id="62-check-in--check-out"><a class="anchor" href="#62-check-in--check-out" aria-hidden="true" tabindex="-1">#</a><span class="h-num">6.2</span> Check-in / check-out</h3><ol>
+<li>Pastikan izin lokasi &amp; kamera. Ambil posisi GPS akurasi tinggi; tunggu <code>accuracy ≤ rules.max_gps_accuracy_m</code> (beri batas waktu ±20 detik, tampilkan akurasi saat ini).</li>
+<li>Deteksi lokasi palsu (<code>is_mock</code>) dan root/jailbreak; bila <code>block_mock_location</code> → blokir.</li>
+<li>Hitung jarak ke <code>locations[]</code>:<ul>
+<li>di dalam radius → <strong>Dalam Lokasi</strong>;</li>
+<li>di luar radius &amp; <code>offsite_allowed</code> → <strong>Luar Lokasi</strong>, minta <code>note</code> bila <code>offsite_requires_note</code>;</li>
+<li>di luar radius &amp; tidak diizinkan → nonaktifkan tombol, tampilkan &quot;Anda berada X m dari …&quot;.</li>
+</ul>
+</li>
+<li>Buka kamera depan (tanpa galeri), kompres foto.</li>
+<li>Buat <code>uuid</code> baru, <strong>simpan dulu ke antrean lokal</strong>, lalu kirim:<ul>
+<li>online → <code>POST /attendance/check-in|check-out</code>;</li>
+<li>gagal jaringan / offline &amp; <code>allow_offline</code> → biarkan di antrean dengan <code>is_offline=true</code> + <code>captured_at</code>.</li>
+</ul>
+</li>
+<li>Tangani <code>reason</code> sesuai <a href="#3-kode-reason">§3</a>. Setelah sukses, hapus dari antrean dan muat ulang <code>/attendance/today</code>.</li>
+</ol>
+<aside class="callout"><p>Validasi di aplikasi hanya untuk UX. <strong>Server tetap memvalidasi ulang</strong> semua aturan.</p>
+</aside><h3 id="63-mode-offline--jam-terpercaya"><a class="anchor" href="#63-mode-offline--jam-terpercaya" aria-hidden="true" tabindex="-1">#</a><span class="h-num">6.3</span> Mode offline &amp; jam terpercaya</h3><p>Jam HP bisa diubah pengguna, sehingga waktu presensi offline dihitung dari <strong>jam server terakhir + jam monotonic</strong> (tidak terpengaruh pengubahan jam HP):</p>
+<figure class="code"><figcaption><span>Teks</span><button type="button" class="copy">Salin</button></figcaption><pre><code>Saat online (GET /time):
+  serverMs   = data.timestamp_ms
+  elapsedMs  = waktu sejak boot (Android: SystemClock.elapsedRealtime; iOS: ProcessInfo.systemUptime)
+  bootId     = penanda boot (Android: Settings.Global.BOOT_COUNT; iOS: kernel boottime)
+  → simpan { serverMs, elapsedMs, bootId }
+
+Saat presensi offline:
+  captured_at = serverMs + (elapsedSekarang − elapsedMs)      → kirim sebagai ISO 8601 UTC
+  bila bootId berbeda (HP sempat restart):
+      captured_at = jam HP, flags = [&quot;time_suspicious&quot;]</code></pre></figure><p>Aturan antrean:</p>
+<ul>
+<li>Simpan item (termasuk file foto terkompres) di SQLite lokal, <strong>urut waktu</strong>.</li>
+<li>Kirim saat koneksi kembali, saat aplikasi dibuka, dan dari background task (Android WorkManager; iOS background fetch — tidak dijamin).</li>
+<li>Kirim lewat <code>POST /attendance/sync</code> maks. 20 item per request, berurutan (check-in sebelum check-out).</li>
+<li>Data lebih tua dari <code>offline_max_hours</code> akan ditolak server (<code>offline_expired</code>) — peringatkan pengguna bila ada item yang mendekati batas.</li>
+<li>Tampilkan jumlah data belum terkirim di beranda dan layar daftar antrean.</li>
+</ul>
+<h3 id="64-shift-melewati-tengah-malam"><a class="anchor" href="#64-shift-melewati-tengah-malam" aria-hidden="true" tabindex="-1">#</a><span class="h-num">6.4</span> Shift melewati tengah malam</h3><p>Presensi milik <strong>tanggal check-in</strong>. Contoh: masuk 2 Okt 08:00, pulang 3 Okt 01:00 → satu presensi <code>work_date = 2026-10-02</code>, durasi 17 jam, <code>check_out.next_day = true</code>.</p>
+<div class="table-wrap"><table><thead><tr><th>Situasi</th><th>Perilaku</th></tr></thead><tbody><tr><td>Lewat tengah malam, belum check-out</td><td><code>/attendance/today</code> → <code>attendance: null</code>, <code>open_attendance: {work_date: &quot;2026-10-02&quot;}</code> → tampilkan <strong>Check-out</strong></td></tr><tr><td>Check-out 01:00</td><td>Menutup presensi 2 Okt (selama ≤ <code>max_work_hours</code> sejak check-in)</td></tr><tr><td>Check-in saat shift kemarin masih terbuka</td><td><code>409 open_previous_shift</code> + <code>data: {id, work_date, check_in_time}</code>. Tampilkan dialog: <strong>&quot;Check-out shift 2 Okt&quot;</strong> (panggil check-out) atau <strong>&quot;Lupa check-out, mulai presensi baru&quot;</strong> (ulangi check-in dengan <code>abandon_previous=true</code> — presensi lama ditandai lupa check-out)</td></tr><tr><td>Check-out setelah <code>max_work_hours</code> lewat</td><td><code>409 no_checkin</code> → minta hubungi admin untuk koreksi</td></tr></tbody></table></div><h3 id="65-perangkat--sesi"><a class="anchor" href="#65-perangkat--sesi" aria-hidden="true" tabindex="-1">#</a><span class="h-num">6.5</span> Perangkat &amp; sesi</h3><ul>
+<li><code>device_id</code> dibuat sekali per instalasi dan disimpan di secure storage. Hapus instal / ganti HP → <code>device_mismatch</code> → admin melakukan <strong>Reset perangkat</strong> di web.</li>
+<li>Reset password / reset perangkat / akun dinonaktifkan oleh admin akan <strong>mencabut token</strong> → request berikutnya <code>401</code> atau <code>403 inactive</code> → kembali ke login.</li>
+</ul>
+
+<h2 id="7-checklist-implementasi"><a class="anchor" href="#7-checklist-implementasi" aria-hidden="true" tabindex="-1">#</a><span class="h-num">7.</span> Checklist implementasi</h2><ul>
+<li><input disabled="" type="checkbox"> Semua request mengirim <code>Accept: application/json</code></li>
+<li><input disabled="" type="checkbox"> Logika berbasis <code>reason</code>, bukan teks <code>message</code></li>
+<li><input disabled="" type="checkbox"> Token &amp; <code>device_id</code> di secure storage</li>
+<li><input disabled="" type="checkbox"> Cek <code>min_app_version</code> saat dibuka</li>
+<li><input disabled="" type="checkbox"> Cache <code>config</code> proyek; segarkan saat online</li>
+<li><input disabled="" type="checkbox"> Jam terpercaya dari <code>GET /time</code> + jam monotonic</li>
+<li><input disabled="" type="checkbox"> UUID per aksi presensi; simpan ke antrean sebelum dikirim</li>
+<li><input disabled="" type="checkbox"> Sinkron batch + penanganan hasil per item (permanen vs coba lagi)</li>
+<li><input disabled="" type="checkbox"> Foto: kamera depan, tanpa galeri, kompres ±300 KB</li>
+<li><input disabled="" type="checkbox"> Deteksi lokasi palsu &amp; root/jailbreak</li>
+<li><input disabled="" type="checkbox"> Tombol beranda mengikuti <code>attendance</code> + <code>open_attendance</code></li>
+<li><input disabled="" type="checkbox"> Dialog <code>open_previous_shift</code> (check-out vs <code>abandon_previous</code>)</li>
+<li><input disabled="" type="checkbox"> Penanda <code>(+1)</code> bila <code>next_day = true</code></li>
+<li><input disabled="" type="checkbox"> Foto dimuat dengan header Authorization</li>
+<li><input disabled="" type="checkbox"> Menu Team Leader hanya bila <code>is_team_leader</code> di proyek aktif</li>
+<li><input disabled="" type="checkbox"> Tangani <code>401</code> (login ulang) dan <code>429</code> (coba lagi nanti) secara global</li>
+</ul>
+<p>Akun uji tiap peran ada di <a href="#8-akun-login-per-peran">§8</a>; cara menyiapkan data awal di <a href="#9-migrasi--data-awal-seeder">§9</a>.</p>
+
+<h2 id="8-akun-login-per-peran"><a class="anchor" href="#8-akun-login-per-peran" aria-hidden="true" tabindex="-1">#</a><span class="h-num">8.</span> Akun login per peran</h2><p>Akun di bawah ini dibuat oleh seeder untuk <strong>server pengembangan &amp; QA</strong> (proyek contoh <strong>KDR — Nindya - ITP KSO Kedurus</strong>).</p>
+<aside class="callout"><p>Jangan jalankan seeder demo di server produksi. Untuk klien sungguhan pakai <code>php artisan app:install</code> (<a href="#93-server-klien-baru-tanpa-data-demo">§9.3</a>) dan ganti semua password.</p>
+</aside><div class="table-wrap"><table><thead><tr><th>Peran</th><th>Username</th><th>Password</th><th>Masuk lewat</th><th>Bisa melakukan</th></tr></thead><tbody><tr><td>Super admin</td><td><code>admin</code></td><td><code>password</code></td><td>Web admin</td><td>Semua proyek, pengguna admin, pengaturan aplikasi (logo, warna)</td></tr><tr><td>Admin proyek</td><td><code>admin.kdr</code></td><td><code>password</code></td><td>Web admin</td><td>Kelola proyek KDR saja: karyawan, shift, titik lokasi, libur, pengaturan proyek, monitoring, persetujuan, laporan</td></tr><tr><td>Team Leader</td><td><code>edi.santoso</code></td><td><code>Presensi#2026</code></td><td>Web admin &amp; aplikasi mobile</td><td>Web: dashboard, monitoring (lihat saja), persetujuan, laporan. Mobile: presensi pribadi + kehadiran tim &amp; persetujuan</td></tr><tr><td>Karyawan</td><td>lihat tabel di bawah</td><td><code>Presensi#2026</code></td><td>Aplikasi mobile saja</td><td>Presensi, riwayat, izin/sakit/cuti, ganti password. Login web ditolak</td></tr></tbody></table></div><p><strong>Akun karyawan proyek KDR</strong> (semua password <code>Presensi#2026</code>):</p>
+<div class="table-wrap"><table><thead><tr><th>Username</th><th>Nama</th><th>Jabatan</th></tr></thead><tbody><tr><td><code>edi.santoso</code></td><td>Edi Santoso, S.T., M.T.</td><td>Team Leader</td></tr><tr><td><code>puguh.sarwono</code></td><td>Puguh Sarwono</td><td>Water Resources Engineer</td></tr><tr><td><code>danang.trisno</code></td><td>Danang Ady Trisno, S.T.</td><td>Ahli Hidrologi</td></tr><tr><td><code>bambang.rianto</code></td><td>Bambang Rianto, S.T.</td><td>Ahli Hidromekanikal</td></tr><tr><td><code>edy.jayanto</code></td><td>Edy Jayanto, S.T.</td><td>Ahli Geologi/Geoteknik</td></tr><tr><td><code>helmy.wijaya</code></td><td>Helmy Mukti Wijaya, S.T.</td><td>Ahli Geodesi</td></tr><tr><td><code>nabilah.ismiradiana</code></td><td>Nabilah Ismiradiana</td><td>CAD Operator 1</td></tr><tr><td><code>agus.irawan</code></td><td>Agus Irawan</td><td>Juru Ukur 1</td></tr><tr><td><code>budiarto</code></td><td>Budiarto</td><td>Administrasi dan Keuangan</td></tr></tbody></table></div><div class="table-wrap"><table><thead><tr><th>Alamat</th><th>Lokal</th></tr></thead><tbody><tr><td>Web admin</td><td><code>http://127.0.0.1:8000/login</code></td></tr><tr><td>API mobile</td><td><code>http://127.0.0.1:8000/api/v1</code></td></tr></tbody></table></div><p>Catatan untuk pengujian mobile:</p>
+<ul>
+<li><strong>Satu akun satu perangkat:</strong> login pertama mengikat akun ke <code>device_id</code>. Login dari perangkat lain ditolak <code>device_mismatch</code> sampai admin menekan <strong>Reset perangkat</strong> (web › Karyawan › menu ⋯).</li>
+<li>Titik lokasi KDR: <strong>−7.3154, 112.6855</strong>, radius 100 m. Dalam radius: <code>-7.31545, 112.68552</code>. Di luar radius (±500 m): <code>-7.3109, 112.6855</code>.</li>
+</ul>
+
+<h2 id="9-migrasi--data-awal-seeder"><a class="anchor" href="#9-migrasi--data-awal-seeder" aria-hidden="true" tabindex="-1">#</a><span class="h-num">9.</span> Migrasi &amp; data awal (seeder)</h2><h3 id="91-prasyarat"><a class="anchor" href="#91-prasyarat" aria-hidden="true" tabindex="-1">#</a><span class="h-num">9.1</span> Prasyarat</h3><div class="table-wrap"><table><thead><tr><th>Kebutuhan</th><th>Versi</th></tr></thead><tbody><tr><td>PHP</td><td>8.3 atau lebih baru, ekstensi <code>pdo_mysql</code>, <code>gd</code>, <code>mbstring</code>, <code>fileinfo</code>, <code>zip</code>, <code>intl</code></td></tr><tr><td>Composer</td><td>2.x</td></tr><tr><td>MySQL</td><td>8.x (atau MariaDB 10.6+)</td></tr><tr><td>Node.js</td><td>20+ — hanya di komputer pengembang untuk build aset web (<code>public/build</code> ikut di-deploy)</td></tr></tbody></table></div><h3 id="92-server-pengembangan--qa-dengan-data-demo"><a class="anchor" href="#92-server-pengembangan--qa-dengan-data-demo" aria-hidden="true" tabindex="-1">#</a><span class="h-num">9.2</span> Server pengembangan / QA (dengan data demo)</h3><p>Langkah berurutan dari folder <code>backend</code>:</p>
+<ol>
+<li>Buat database kosong, mis. <code>presensi_proyek</code> (utf8mb4). Untuk automated test buat juga <code>presensi_proyek_test</code>.</li>
+<li>Pasang dependensi &amp; konfigurasi:</li>
+</ol>
+<figure class="code"><figcaption><span>Shell</span><button type="button" class="copy">Salin</button></figcaption><pre><code>composer install
+cp .env.example .env
+php artisan key:generate</code></pre></figure><ol start="3">
+<li>Isi koneksi database di <code>.env</code>:</li>
+</ol>
+<figure class="code"><figcaption><span>Shell</span><button type="button" class="copy">Salin</button></figcaption><pre><code>DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=presensi_proyek
+DB_USERNAME=root
+DB_PASSWORD=
+APP_ENV=local
+APP_TIMEZONE=Asia/Jakarta</code></pre></figure><ol start="4">
+<li>Jalankan migrasi sekaligus seeder:</li>
+</ol>
+<figure class="code"><figcaption><span>Shell</span><button type="button" class="copy">Salin</button></figcaption><pre><code>php artisan migrate <span class="s-flag">--seed</span></code></pre></figure><ol start="5">
+<li>Build aset web &amp; jalankan server:</li>
+</ol>
+<figure class="code"><figcaption><span>Shell</span><button type="button" class="copy">Salin</button></figcaption><pre><code>npm install
+npm run build
+php artisan serve</code></pre></figure><ol start="6">
+<li>Buka <code>http://127.0.0.1:8000/login</code> dan masuk dengan akun di <a href="#8-akun-login-per-peran">§8</a>.</li>
+</ol>
+<p><strong>Isi data awal yang dibuat seeder</strong> (urutan eksekusi <code>DatabaseSeeder</code>):</p>
+<div class="table-wrap"><table><thead><tr><th>Urutan</th><th>Seeder / perintah</th><th>Data yang dibuat</th></tr></thead><tbody><tr><td>1</td><td><code>RoleSeeder</code></td><td>Peran <code>super_admin</code>, <code>project_admin</code>, <code>team_leader</code>, <code>employee</code></td></tr><tr><td>2</td><td>(di <code>DatabaseSeeder</code>)</td><td>Akun super admin <code>admin</code></td></tr><tr><td>3</td><td><code>KedurusProjectSeeder</code></td><td>Profil aplikasi (Nindya - ITP KSO), proyek <strong>KDR</strong> (kontrak mulai 1 Feb 2026 → Bulan ke-1 = 25 Feb–26 Mar 2026), titik lokasi Kantor Proyek Kedurus (radius 100 m), shift Jam Kerja Standard 08:00–17:00, 9 jabatan &amp; 9 karyawan beserta akunnya, penandatangan laporan &quot;Dibuat&quot; (Edi Santoso), kota laporan Surabaya</td></tr><tr><td>4</td><td><code>ProjectAdminSeeder</code></td><td>Akun admin proyek <code>admin.kdr</code> untuk proyek KDR</td></tr><tr><td>5</td><td><code>holidays:import 2026</code></td><td>25 libur nasional &amp; cuti bersama 2026 (tidak aktif sampai diaktifkan di pengaturan proyek; <strong>verifikasi dengan SKB resmi</strong>)</td></tr><tr><td>6</td><td><code>DemoAttendanceSeeder</code></td><td>270 presensi Bulan ke-1 dari dokumen <code>ABSENSI BULAN 1.pdf</code> (tanpa foto). <strong>Hanya jalan bila <code>APP_ENV=local</code></strong></td></tr></tbody></table></div><p>Perintah lain yang sering dipakai:</p>
+<div class="table-wrap"><table><thead><tr><th>Kebutuhan</th><th>Perintah</th></tr></thead><tbody><tr><td>Reset total ke data demo (<strong>menghapus semua data</strong>)</td><td><code>php artisan migrate:fresh --seed</code></td></tr><tr><td>Menjalankan satu seeder saja (aman diulang)</td><td><code>php artisan db:seed --class=ProjectAdminSeeder</code></td></tr><tr><td>Menambah tabel baru setelah update kode</td><td><code>php artisan migrate</code></td></tr><tr><td>Melihat status migrasi</td><td><code>php artisan migrate:status</code></td></tr><tr><td>Menjalankan scheduler &amp; antrean laporan secara lokal</td><td><code>php artisan schedule:work</code></td></tr><tr><td>Automated test (memakai database <code>presensi_proyek_test</code>)</td><td><code>php artisan test</code></td></tr></tbody></table></div><h3 id="93-server-klien-baru-tanpa-data-demo"><a class="anchor" href="#93-server-klien-baru-tanpa-data-demo" aria-hidden="true" tabindex="-1">#</a><span class="h-num">9.3</span> Server klien baru (tanpa data demo)</h3><p>Untuk server produksi / klien baru, <strong>jangan</strong> memakai <code>--seed</code> (data demo dan password bawaan ikut terbuat).</p>
+<figure class="code"><figcaption><span>Shell</span><button type="button" class="copy">Salin</button></figcaption><pre><code>composer install <span class="s-flag">--no-dev</span> <span class="s-flag">--optimize-autoloader</span>
+cp .env.example .env            # APP_ENV=production, APP_DEBUG=false, DB_*, APP_URL
+php artisan key:generate
+php artisan app:install <span class="s-flag">--company</span>=&quot;Nama Perusahaan / KSO&quot; <span class="s-flag">--app-name</span>=&quot;Presensi Proyek&quot; \
+    <span class="s-flag">--username</span>=admin <span class="s-flag">--email</span>=admin@perusahaan.co.id
+php artisan holidays:import 2026
+php artisan config:cache &amp;&amp; php artisan route:cache &amp;&amp; php artisan view:cache</code></pre></figure><p><code>app:install</code> menjalankan migrasi, membuat peran, menyimpan nama perusahaan &amp; aplikasi, lalu membuat super admin (password ditanyakan secara interaktif, atau lewat <code>--password=</code>).</p>
+<p>Setelah itu, lewat web admin sebagai super admin:</p>
+<ol>
+<li><strong>Daftar Proyek</strong> → buat proyek (kode, nama, kontrak, zona waktu). Shift standar dibuat otomatis.</li>
+<li><strong>Titik Lokasi</strong> → tentukan titik &amp; radius di peta.</li>
+<li><strong>Shift &amp; Jam Kerja</strong> → sesuaikan jam masuk/pulang dan aturan terlambat.</li>
+<li><strong>Karyawan</strong> → tambah karyawan beserta akun login; tandai Team Leader.</li>
+<li><strong>Pengaturan Proyek</strong> → periode laporan, hari kerja &amp; libur, lokasi &amp; presensi, offline, laporan, penandatangan.</li>
+<li><strong>Pengguna Admin</strong> → buat akun admin proyek bila perlu.</li>
+</ol>
+<p>Terakhir, pasang satu cron di server:</p>
+<figure class="code"><figcaption><span>Shell</span><button type="button" class="copy">Salin</button></figcaption><pre><code>* * * * * php /path/ke/backend/artisan schedule:run &gt;&gt; /dev/null 2&gt;&amp;1</code></pre></figure><p>Cron ini menjalankan penandaan alpha/libur (00:30), lupa check-out (tiap jam), pembersihan laporan lama (02:00), dan antrean laporan besar. Di VPS dengan Supervisor set <code>QUEUE_VIA_SCHEDULER=false</code> dan jalankan <code>php artisan queue:work</code> sebagai layanan.</p>
+
+
+            <footer class="footer">
+                Sumber: <code>docs/api/API_MOBILE.md</code> di repositori. Koleksi Postman untuk uji API: <code>docs/api/Presensi_Proyek_API.postman_collection.json</code> (41 request, 163 assertion).
+            </footer>
+        </article>
+    </main>
+</div>
+
+<script>
+    // Tombol salin pada blok kode
+    document.querySelectorAll('.code .copy').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+            const text = btn.closest('.code').querySelector('code').innerText;
+            try {
+                await navigator.clipboard.writeText(text);
+                btn.textContent = 'Tersalin';
+            } catch (e) {
+                const range = document.createRange();
+                range.selectNodeContents(btn.closest('.code').querySelector('code'));
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+                btn.textContent = 'Tekan Ctrl+C';
+            }
+            setTimeout(() => { btn.textContent = 'Salin'; }, 1600);
+        });
+    });
+
+    // Pencarian endpoint di navigasi
+    const search = document.getElementById('navSearch');
+    const empty = document.getElementById('navEmpty');
+    search.addEventListener('input', () => {
+        const q = search.value.trim().toLowerCase();
+        let shown = 0;
+        document.querySelectorAll('#navList .nav-ep').forEach((a) => {
+            const hit = !q || a.dataset.search.includes(q);
+            a.parentElement.hidden = !hit;
+            if (hit) shown++;
+        });
+        document.querySelectorAll('#navList .nav-group').forEach((g) => {
+            g.hidden = !!q && !g.querySelector('li:not([hidden]) .nav-ep');
+        });
+        document.querySelectorAll('#navList .nav-section').forEach((s) => {
+            s.hidden = !!q && !s.querySelector('.nav-ep') ? true : (!!q && !s.querySelector('.nav-group:not([hidden])'));
+        });
+        empty.hidden = !q || shown > 0;
+    });
+
+    // Navigasi mobile
+    const toggle = document.getElementById('navToggle');
+    const navBody = document.getElementById('navBody');
+    const narrow = window.matchMedia('(max-width: 900px)');
+    const syncNav = () => {
+        navBody.dataset.open = narrow.matches ? String(toggle.getAttribute('aria-expanded') === 'true') : 'true';
+    };
+    toggle.addEventListener('click', () => {
+        toggle.setAttribute('aria-expanded', String(toggle.getAttribute('aria-expanded') !== 'true'));
+        syncNav();
+    });
+    narrow.addEventListener('change', syncNav);
+    navBody.addEventListener('click', (e) => {
+        if (e.target.closest('a') && narrow.matches) {
+            toggle.setAttribute('aria-expanded', 'false');
+            syncNav();
+        }
+    });
+    syncNav();
+
+    // Sorot bagian yang sedang dibaca
+    const links = new Map([...document.querySelectorAll('#navList a')].map((a) => [a.getAttribute('href').slice(1), a]));
+    const targets = [...links.keys()].map((id) => document.getElementById(id)).filter(Boolean);
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+            if (!entry.isIntersecting) return;
+            links.forEach((a) => a.classList.remove('is-active'));
+            const a = links.get(entry.target.id);
+            if (a) {
+                a.classList.add('is-active');
+                if (!narrow.matches) a.scrollIntoView({ block: 'nearest' });
+            }
+        });
+    }, { rootMargin: '0px 0px -75% 0px' });
+    targets.forEach((t) => observer.observe(t));
+</script>

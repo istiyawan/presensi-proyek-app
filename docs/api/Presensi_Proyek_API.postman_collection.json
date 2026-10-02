@@ -1,0 +1,2585 @@
+{
+  "info": {
+    "name": "Presensi Proyek — API Mobile v1",
+    "description": "Koleksi uji API mobile Presensi Proyek. Dokumentasi lengkap: docs/api/API_MOBILE.md.\n\nCARA PAKAI (QA):\n1. Reset database demo: `php artisan migrate:fresh --seed` (koleksi membuat presensi HARI INI & KEMARIN, jadi jalankan pada data bersih).\n2. Impor koleksi + environment `Presensi_Proyek_Local.postman_environment.json`, sesuaikan `baseUrl`.\n3. Pastikan file `sample-selfie.jpg` ada di working directory Postman (Settings → General → Working directory) — dipakai untuk field foto.\n4. Jalankan seluruh koleksi berurutan (Collection Runner) atau via CLI:\n   npx newman run Presensi_Proyek_API.postman_collection.json -e Presensi_Proyek_Local.postman_environment.json --working-dir .\n\nSetiap request punya test otomatis (status HTTP, kode `reason`, isi data).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "tlToken",
+      "value": ""
+    },
+    {
+      "key": "uuid",
+      "value": ""
+    },
+    {
+      "key": "checkinUuid",
+      "value": ""
+    },
+    {
+      "key": "attendanceId",
+      "value": ""
+    },
+    {
+      "key": "leaveId",
+      "value": ""
+    },
+    {
+      "key": "yIn",
+      "value": ""
+    },
+    {
+      "key": "yOut",
+      "value": ""
+    },
+    {
+      "key": "expiredAt",
+      "value": ""
+    },
+    {
+      "key": "u1",
+      "value": ""
+    },
+    {
+      "key": "u2",
+      "value": ""
+    },
+    {
+      "key": "u3",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Publik",
+      "item": [
+        {
+          "name": "Jam server",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('reason = null', () => pm.expect(body.reason).to.eql(null));",
+                  "pm.test('amplop respons lengkap', () => pm.expect(body).to.have.all.keys('success','message','reason','data','errors'));",
+                  "pm.test('timestamp_ms angka', () => pm.expect(body.data.timestamp_ms).to.be.a('number'));",
+                  "pm.test('server_time ISO + offset', () => pm.expect(body.data.server_time).to.match(/[+-]\\d{2}:\\d{2}$/));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/time",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "time"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Info aplikasi",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('reason = null', () => pm.expect(body.reason).to.eql(null));",
+                  "pm.test('amplop respons lengkap', () => pm.expect(body).to.have.all.keys('success','message','reason','data','errors'));",
+                  "pm.test('ada min_app_version', () => pm.expect(body.data.min_app_version).to.match(/^\\d+\\.\\d+\\.\\d+$/));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/app/info",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "app",
+                "info"
+              ]
+            },
+            "description": ""
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Autentikasi",
+      "item": [
+        {
+          "name": "Login — password salah",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', () => pm.response.to.have.status(401));",
+                  "const body = pm.response.json();",
+                  "pm.test('reason = invalid_credentials', () => pm.expect(body.reason).to.eql('invalid_credentials'));",
+                  "pm.test('amplop respons lengkap', () => pm.expect(body).to.have.all.keys('success','message','reason','data','errors'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"salah\",\n  \"device_id\": \"{{deviceId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Login — field kosong",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 422', () => pm.response.to.have.status(422));",
+                  "const body = pm.response.json();",
+                  "pm.test('reason = validation', () => pm.expect(body.reason).to.eql('validation'));",
+                  "pm.test('amplop respons lengkap', () => pm.expect(body).to.have.all.keys('success','message','reason','data','errors'));",
+                  "pm.test('error per field', () => pm.expect(body.errors).to.have.keys('password','device_id'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Login — berhasil",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('reason = null', () => pm.expect(body.reason).to.eql(null));",
+                  "pm.test('amplop respons lengkap', () => pm.expect(body).to.have.all.keys('success','message','reason','data','errors'));",
+                  "pm.test('token diterima', () => pm.expect(body.data.token).to.be.a('string').and.not.empty);",
+                  "pm.test('profil berisi proyek', () => pm.expect(body.data.profile.projects).to.be.an('array').that.is.not.empty);",
+                  "pm.collectionVariables.set('token', body.data.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\",\n  \"device_id\": \"{{deviceId}}\",\n  \"platform\": \"android\",\n  \"model\": \"QA Postman\",\n  \"os_version\": \"Android 14\",\n  \"app_version\": \"1.0.0\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Login — perangkat lain ditolak",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 403', () => pm.response.to.have.status(403));",
+                  "const body = pm.response.json();",
+                  "pm.test('reason = device_mismatch', () => pm.expect(body.reason).to.eql('device_mismatch'));",
+                  "pm.test('amplop respons lengkap', () => pm.expect(body).to.have.all.keys('success','message','reason','data','errors'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\",\n  \"device_id\": \"{{deviceId}}-lain\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Tanpa token → 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', () => pm.response.to.have.status(401));",
+                  "const body = pm.response.json();",
+                  "pm.test('reason = unauthenticated', () => pm.expect(body.reason).to.eql('unauthenticated'));",
+                  "pm.test('amplop respons lengkap', () => pm.expect(body).to.have.all.keys('success','message','reason','data','errors'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Profil saya",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('reason = null', () => pm.expect(body.reason).to.eql(null));",
+                  "pm.test('amplop respons lengkap', () => pm.expect(body).to.have.all.keys('success','message','reason','data','errors'));",
+                  "pm.test('username sesuai', () => pm.expect(body.data.user.username).to.eql(pm.environment.get('username')));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Ganti password — password lama salah",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 422', () => pm.response.to.have.status(422));",
+                  "const body = pm.response.json();",
+                  "pm.test('reason = validation', () => pm.expect(body.reason).to.eql('validation'));",
+                  "pm.test('amplop respons lengkap', () => pm.expect(body).to.have.all.keys('success','message','reason','data','errors'));",
+                  "pm.test('error di current_password', () => pm.expect(body.errors).to.have.property('current_password'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_password\": \"salah\",\n  \"password\": \"PasswordBaru123\",\n  \"password_confirmation\": \"PasswordBaru123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/me/password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "password"
+              ]
+            },
+            "description": ""
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Proyek",
+      "item": [
+        {
+          "name": "Konfigurasi proyek",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('reason = null', () => pm.expect(body.reason).to.eql(null));",
+                  "pm.test('amplop respons lengkap', () => pm.expect(body).to.have.all.keys('success','message','reason','data','errors'));",
+                  "pm.test('ada titik lokasi', () => pm.expect(body.data.locations).to.be.an('array').that.is.not.empty);",
+                  "pm.test('ada aturan', () => pm.expect(body.data.rules).to.include.keys('max_gps_accuracy_m','allow_offline','max_work_hours','offsite_allowed'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/projects/{{projectId}}/config",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "projects",
+                "{{projectId}}",
+                "config"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Konfigurasi proyek lain → 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 403', () => pm.response.to.have.status(403));",
+                  "const body = pm.response.json();",
+                  "pm.test('reason = http_403', () => pm.expect(body.reason).to.eql('http_403'));",
+                  "pm.test('amplop respons lengkap', () => pm.expect(body).to.have.all.keys('success','message','reason','data','errors'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/projects/999/config",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "projects",
+                "999",
+                "config"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Daftar periode",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('reason = null', () => pm.expect(body.reason).to.eql(null));",
+                  "pm.test('amplop respons lengkap', () => pm.expect(body).to.have.all.keys('success','message','reason','data','errors'));",
+                  "pm.test('satu periode berjalan', () => pm.expect(body.data.filter(p => p.is_current).length).to.eql(1));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/projects/{{projectId}}/periods",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "projects",
+                "{{projectId}}",
+                "periods"
+              ]
+            },
+            "description": ""
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Presensi online",
+      "item": [
+        {
+          "name": "Status hari ini (belum presensi)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('reason = null', () => pm.expect(body.reason).to.eql(null));",
+                  "pm.test('amplop respons lengkap', () => pm.expect(body).to.have.all.keys('success','message','reason','data','errors'));",
+                  "pm.test('belum ada presensi hari ini', () => pm.expect(body.data.attendance).to.eql(null));",
+                  "pm.test('ada open_attendance key', () => pm.expect(body.data).to.have.property('open_attendance'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/attendance/today?project_id={{projectId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "attendance",
+                "today"
+              ],
+              "query": [
+                {
+                  "key": "project_id",
+                  "value": "{{projectId}}"
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Check-out sebelum check-in → 409",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('uuid', pm.variables.replaceIn('{{$guid}}'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 409', () => pm.response.to.have.status(409));",
+                  "const body = pm.response.json();",
+                  "pm.test('reason = no_checkin', () => pm.expect(body.reason).to.eql('no_checkin'));",
+                  "pm.test('amplop respons lengkap', () => pm.expect(body).to.have.all.keys('success','message','reason','data','errors'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "uuid",
+                  "value": "{{uuid}}",
+                  "type": "text"
+                },
+                {
+                  "key": "project_id",
+                  "value": "{{projectId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "latitude",
+                  "value": "{{latInside}}",
+                  "type": "text"
+                },
+                {
+                  "key": "longitude",
+                  "value": "{{lng}}",
+                  "type": "text"
+                },
+                {
+                  "key": "accuracy",
+                  "value": "8.5",
+                  "type": "text"
+                },
+                {
+                  "key": "is_mock",
+                  "value": "false",
+                  "type": "text"
+                },
+                {
+                  "key": "device",
+                  "value": "{\"model\":\"QA Postman\",\"os\":\"Android 14\",\"app_version\":\"1.0.0\"}",
+                  "type": "text"
+                },
+                {
+                  "key": "photo",
+                  "type": "file",
+                  "src": "sample-selfie.jpg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/attendance/check-out",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "attendance",
+                "check-out"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Check-in di luar radius → 422",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('uuid', pm.variables.replaceIn('{{$guid}}'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 422', () => pm.response.to.have.status(422));",
+                  "const body = pm.response.json();",
+                  "pm.test('reason = outside_radius', () => pm.expect(body.reason).to.eql('outside_radius'));",
+                  "pm.test('amplop respons lengkap', () => pm.expect(body).to.have.all.keys('success','message','reason','data','errors'));",
+                  "pm.test('jarak dikembalikan', () => pm.expect(body.data.distance_m).to.be.above(body.data.radius_m));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "uuid",
+                  "value": "{{uuid}}",
+                  "type": "text"
+                },
+                {
+                  "key": "project_id",
+                  "value": "{{projectId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "latitude",
+                  "value": "{{latOutside}}",
+                  "type": "text"
+                },
+                {
+                  "key": "longitude",
+                  "value": "{{lng}}",
+                  "type": "text"
+                },
+                {
+                  "key": "accuracy",
+                  "value": "8.5",
+                  "type": "text"
+                },
+                {
+                  "key": "is_mock",
+                  "value": "false",
+                  "type": "text"
+                },
+                {
+                  "key": "device",
+                  "value": "{\"model\":\"QA Postman\",\"os\":\"Android 14\",\"app_version\":\"1.0.0\"}",
+                  "type": "text"
+                },
+                {
+                  "key": "photo",
+                  "type": "file",
+                  "src": "sample-selfie.jpg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/attendance/check-in",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "attendance",
+                "check-in"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Check-in lokasi palsu → 403",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('uuid', pm.variables.replaceIn('{{$guid}}'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 403', () => pm.response.to.have.status(403));",
+                  "const body = pm.response.json();",
+                  "pm.test('reason = mock_location', () => pm.expect(body.reason).to.eql('mock_location'));",
+                  "pm.test('amplop respons lengkap', () => pm.expect(body).to.have.all.keys('success','message','reason','data','errors'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "uuid",
+                  "value": "{{uuid}}",
+                  "type": "text"
+                },
+                {
+                  "key": "project_id",
+                  "value": "{{projectId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "latitude",
+                  "value": "{{latInside}}",
+                  "type": "text"
+                },
+                {
+                  "key": "longitude",
+                  "value": "{{lng}}",
+                  "type": "text"
+                },
+                {
+                  "key": "accuracy",
+                  "value": "8.5",
+                  "type": "text"
+                },
+                {
+                  "key": "is_mock",
+                  "value": "true",
+                  "type": "text"
+                },
+                {
+                  "key": "device",
+                  "value": "{\"model\":\"QA Postman\",\"os\":\"Android 14\",\"app_version\":\"1.0.0\"}",
+                  "type": "text"
+                },
+                {
+                  "key": "photo",
+                  "type": "file",
+                  "src": "sample-selfie.jpg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/attendance/check-in",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "attendance",
+                "check-in"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Check-in akurasi GPS rendah → 422",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('uuid', pm.variables.replaceIn('{{$guid}}'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 422', () => pm.response.to.have.status(422));",
+                  "const body = pm.response.json();",
+                  "pm.test('reason = low_accuracy', () => pm.expect(body.reason).to.eql('low_accuracy'));",
+                  "pm.test('amplop respons lengkap', () => pm.expect(body).to.have.all.keys('success','message','reason','data','errors'));",
+                  "pm.test('akurasi angka', () => pm.expect(body.data.accuracy).to.be.a('number'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "uuid",
+                  "value": "{{uuid}}",
+                  "type": "text"
+                },
+                {
+                  "key": "project_id",
+                  "value": "{{projectId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "latitude",
+                  "value": "{{latInside}}",
+                  "type": "text"
+                },
+                {
+                  "key": "longitude",
+                  "value": "{{lng}}",
+                  "type": "text"
+                },
+                {
+                  "key": "accuracy",
+                  "value": "150",
+                  "type": "text"
+                },
+                {
+                  "key": "is_mock",
+                  "value": "false",
+                  "type": "text"
+                },
+                {
+                  "key": "device",
+                  "value": "{\"model\":\"QA Postman\",\"os\":\"Android 14\",\"app_version\":\"1.0.0\"}",
+                  "type": "text"
+                },
+                {
+                  "key": "photo",
+                  "type": "file",
+                  "src": "sample-selfie.jpg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/attendance/check-in",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "attendance",
+                "check-in"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Check-in tanpa foto & uuid salah → 422",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 422', () => pm.response.to.have.status(422));",
+                  "const body = pm.response.json();",
+                  "pm.test('reason = validation', () => pm.expect(body.reason).to.eql('validation'));",
+                  "pm.test('amplop respons lengkap', () => pm.expect(body).to.have.all.keys('success','message','reason','data','errors'));",
+                  "pm.test('error foto & uuid', () => pm.expect(body.errors).to.include.keys('photo','uuid','latitude'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "project_id",
+                  "value": "{{projectId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "uuid",
+                  "value": "bukan-uuid",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/attendance/check-in",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "attendance",
+                "check-in"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Check-in — berhasil",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('uuid', pm.variables.replaceIn('{{$guid}}'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('reason = null', () => pm.expect(body.reason).to.eql(null));",
+                  "pm.test('amplop respons lengkap', () => pm.expect(body).to.have.all.keys('success','message','reason','data','errors'));",
+                  "pm.test('mode dalam lokasi', () => pm.expect(body.data.check_in.mode).to.eql('onsite'));",
+                  "pm.test('status hadir/terlambat', () => pm.expect(['hadir','terlambat']).to.include(body.data.status));",
+                  "pm.test('uuid tersimpan', () => pm.expect(body.data.check_in.uuid).to.eql(pm.collectionVariables.get('uuid')));",
+                  "pm.collectionVariables.set('attendanceId', body.data.id);",
+                  "pm.collectionVariables.set('checkinUuid', body.data.check_in.uuid);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "uuid",
+                  "value": "{{uuid}}",
+                  "type": "text"
+                },
+                {
+                  "key": "project_id",
+                  "value": "{{projectId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "latitude",
+                  "value": "{{latInside}}",
+                  "type": "text"
+                },
+                {
+                  "key": "longitude",
+                  "value": "{{lng}}",
+                  "type": "text"
+                },
+                {
+                  "key": "accuracy",
+                  "value": "8.5",
+                  "type": "text"
+                },
+                {
+                  "key": "is_mock",
+                  "value": "false",
+                  "type": "text"
+                },
+                {
+                  "key": "device",
+                  "value": "{\"model\":\"QA Postman\",\"os\":\"Android 14\",\"app_version\":\"1.0.0\"}",
+                  "type": "text"
+                },
+                {
+                  "key": "photo",
+                  "type": "file",
+                  "src": "sample-selfie.jpg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/attendance/check-in",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "attendance",
+                "check-in"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Check-in ulang dengan uuid sama → idempotent",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('reason = null', () => pm.expect(body.reason).to.eql(null));",
+                  "pm.test('amplop respons lengkap', () => pm.expect(body).to.have.all.keys('success','message','reason','data','errors'));",
+                  "pm.test('id sama (tidak dobel)', () => pm.expect(body.data.id).to.eql(Number(pm.collectionVariables.get('attendanceId'))));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "uuid",
+                  "value": "{{checkinUuid}}",
+                  "type": "text"
+                },
+                {
+                  "key": "project_id",
+                  "value": "{{projectId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "latitude",
+                  "value": "{{latInside}}",
+                  "type": "text"
+                },
+                {
+                  "key": "longitude",
+                  "value": "{{lng}}",
+                  "type": "text"
+                },
+                {
+                  "key": "accuracy",
+                  "value": "8.5",
+                  "type": "text"
+                },
+                {
+                  "key": "photo",
+                  "type": "file",
+                  "src": "sample-selfie.jpg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/attendance/check-in",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "attendance",
+                "check-in"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Check-in kedua (uuid baru) → 409",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('uuid', pm.variables.replaceIn('{{$guid}}'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 409', () => pm.response.to.have.status(409));",
+                  "const body = pm.response.json();",
+                  "pm.test('reason = already_checked_in', () => pm.expect(body.reason).to.eql('already_checked_in'));",
+                  "pm.test('amplop respons lengkap', () => pm.expect(body).to.have.all.keys('success','message','reason','data','errors'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "uuid",
+                  "value": "{{uuid}}",
+                  "type": "text"
+                },
+                {
+                  "key": "project_id",
+                  "value": "{{projectId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "latitude",
+                  "value": "{{latInside}}",
+                  "type": "text"
+                },
+                {
+                  "key": "longitude",
+                  "value": "{{lng}}",
+                  "type": "text"
+                },
+                {
+                  "key": "accuracy",
+                  "value": "8.5",
+                  "type": "text"
+                },
+                {
+                  "key": "is_mock",
+                  "value": "false",
+                  "type": "text"
+                },
+                {
+                  "key": "device",
+                  "value": "{\"model\":\"QA Postman\",\"os\":\"Android 14\",\"app_version\":\"1.0.0\"}",
+                  "type": "text"
+                },
+                {
+                  "key": "photo",
+                  "type": "file",
+                  "src": "sample-selfie.jpg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/attendance/check-in",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "attendance",
+                "check-in"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Status hari ini (sudah check-in)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('reason = null', () => pm.expect(body.reason).to.eql(null));",
+                  "pm.test('amplop respons lengkap', () => pm.expect(body).to.have.all.keys('success','message','reason','data','errors'));",
+                  "pm.test('check_in terisi', () => pm.expect(body.data.attendance.check_in).to.not.eql(null));",
+                  "pm.test('check_out kosong', () => pm.expect(body.data.attendance.check_out).to.eql(null));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/attendance/today?project_id={{projectId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "attendance",
+                "today"
+              ],
+              "query": [
+                {
+                  "key": "project_id",
+                  "value": "{{projectId}}"
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Foto check-in (thumbnail)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('berupa JPEG', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('image/jpeg'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/attendance/{{attendanceId}}/photo/in?thumb=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "attendance",
+                "{{attendanceId}}",
+                "photo",
+                "in"
+              ],
+              "query": [
+                {
+                  "key": "thumb",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Check-out — berhasil",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('uuid', pm.variables.replaceIn('{{$guid}}'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('reason = null', () => pm.expect(body.reason).to.eql(null));",
+                  "pm.test('amplop respons lengkap', () => pm.expect(body).to.have.all.keys('success','message','reason','data','errors'));",
+                  "pm.test('durasi terisi', () => pm.expect(body.data.duration_minutes).to.be.a('number'));",
+                  "pm.test('label durasi', () => pm.expect(body.data.duration_label).to.match(/jam \\d+ menit$/));",
+                  "pm.test('next_day boolean', () => pm.expect(body.data.check_out.next_day).to.be.a('boolean'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "uuid",
+                  "value": "{{uuid}}",
+                  "type": "text"
+                },
+                {
+                  "key": "project_id",
+                  "value": "{{projectId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "latitude",
+                  "value": "{{latInside}}",
+                  "type": "text"
+                },
+                {
+                  "key": "longitude",
+                  "value": "{{lng}}",
+                  "type": "text"
+                },
+                {
+                  "key": "accuracy",
+                  "value": "8.5",
+                  "type": "text"
+                },
+                {
+                  "key": "is_mock",
+                  "value": "false",
+                  "type": "text"
+                },
+                {
+                  "key": "device",
+                  "value": "{\"model\":\"QA Postman\",\"os\":\"Android 14\",\"app_version\":\"1.0.0\"}",
+                  "type": "text"
+                },
+                {
+                  "key": "photo",
+                  "type": "file",
+                  "src": "sample-selfie.jpg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/attendance/check-out",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "attendance",
+                "check-out"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Check-out kedua → 409",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('uuid', pm.variables.replaceIn('{{$guid}}'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 409', () => pm.response.to.have.status(409));",
+                  "const body = pm.response.json();",
+                  "pm.test('reason = already_checked_out', () => pm.expect(body.reason).to.eql('already_checked_out'));",
+                  "pm.test('amplop respons lengkap', () => pm.expect(body).to.have.all.keys('success','message','reason','data','errors'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "uuid",
+                  "value": "{{uuid}}",
+                  "type": "text"
+                },
+                {
+                  "key": "project_id",
+                  "value": "{{projectId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "latitude",
+                  "value": "{{latInside}}",
+                  "type": "text"
+                },
+                {
+                  "key": "longitude",
+                  "value": "{{lng}}",
+                  "type": "text"
+                },
+                {
+                  "key": "accuracy",
+                  "value": "8.5",
+                  "type": "text"
+                },
+                {
+                  "key": "is_mock",
+                  "value": "false",
+                  "type": "text"
+                },
+                {
+                  "key": "device",
+                  "value": "{\"model\":\"QA Postman\",\"os\":\"Android 14\",\"app_version\":\"1.0.0\"}",
+                  "type": "text"
+                },
+                {
+                  "key": "photo",
+                  "type": "file",
+                  "src": "sample-selfie.jpg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/attendance/check-out",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "attendance",
+                "check-out"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Detail presensi",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('reason = null', () => pm.expect(body.reason).to.eql(null));",
+                  "pm.test('amplop respons lengkap', () => pm.expect(body).to.have.all.keys('success','message','reason','data','errors'));",
+                  "pm.test('ada data karyawan', () => pm.expect(body.data.employee).to.have.keys('id','name','position'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/attendance/{{attendanceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "attendance",
+                "{{attendanceId}}"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Riwayat periode berjalan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('reason = null', () => pm.expect(body.reason).to.eql(null));",
+                  "pm.test('amplop respons lengkap', () => pm.expect(body).to.have.all.keys('success','message','reason','data','errors'));",
+                  "pm.test('summary objek', () => pm.expect(body.data.summary).to.be.an('object'));",
+                  "pm.test('items array', () => pm.expect(body.data.items).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/attendance/history?project_id={{projectId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "attendance",
+                "history"
+              ],
+              "query": [
+                {
+                  "key": "project_id",
+                  "value": "{{projectId}}"
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Riwayat Bulan ke-1 (data demo PDF)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('reason = null', () => pm.expect(body.reason).to.eql(null));",
+                  "pm.test('amplop respons lengkap', () => pm.expect(body).to.have.all.keys('success','message','reason','data','errors'));",
+                  "pm.test('30 hari hadir', () => pm.expect(body.data.summary.hadir).to.eql(30));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/attendance/history?project_id={{projectId}}&from=2026-02-25&to=2026-03-26",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "attendance",
+                "history"
+              ],
+              "query": [
+                {
+                  "key": "project_id",
+                  "value": "{{projectId}}"
+                },
+                {
+                  "key": "from",
+                  "value": "2026-02-25"
+                },
+                {
+                  "key": "to",
+                  "value": "2026-03-26"
+                }
+              ]
+            },
+            "description": ""
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Sinkron offline",
+      "event": [],
+      "item": [
+        {
+          "name": "Sinkron batch (2 sukses + 1 kedaluwarsa)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Kemarin 08:00 & 17:00 WIB (UTC+7), dan 10 hari lalu (kedaluwarsa)",
+                  "const y = new Date(Date.now() - 86400000); y.setUTCHours(1, 0, 0, 0);",
+                  "pm.collectionVariables.set('yIn', y.toISOString());",
+                  "pm.collectionVariables.set('yOut', new Date(y.getTime() + 9 * 3600000).toISOString());",
+                  "pm.collectionVariables.set('expiredAt', new Date(Date.now() - 10 * 86400000).toISOString());",
+                  "['u1','u2','u3'].forEach(k => pm.collectionVariables.set(k, pm.variables.replaceIn('{{$guid}}')));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('reason = null', () => pm.expect(body.reason).to.eql(null));",
+                  "pm.test('amplop respons lengkap', () => pm.expect(body).to.have.all.keys('success','message','reason','data','errors'));",
+                  "pm.test('3 hasil', () => pm.expect(body.data).to.have.length(3));",
+                  "pm.test('item 1 check-in sukses', () => pm.expect(body.data[0].success).to.eql(true));",
+                  "pm.test('item 2 check-out sukses, durasi 9 jam', () => { pm.expect(body.data[1].success).to.eql(true); pm.expect(body.data[1].data.duration_minutes).to.eql(540); });",
+                  "pm.test('item 1 ditandai offline', () => pm.expect(body.data[0].data.check_in.offline).to.eql(true));",
+                  "pm.test('item 3 kedaluwarsa', () => pm.expect(body.data[2].reason).to.eql('offline_expired'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "items[0][type]",
+                  "value": "check_in",
+                  "type": "text"
+                },
+                {
+                  "key": "items[0][uuid]",
+                  "value": "{{u1}}",
+                  "type": "text"
+                },
+                {
+                  "key": "items[0][project_id]",
+                  "value": "{{projectId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "items[0][latitude]",
+                  "value": "{{latInside}}",
+                  "type": "text"
+                },
+                {
+                  "key": "items[0][longitude]",
+                  "value": "{{lng}}",
+                  "type": "text"
+                },
+                {
+                  "key": "items[0][accuracy]",
+                  "value": "10",
+                  "type": "text"
+                },
+                {
+                  "key": "items[0][is_offline]",
+                  "value": "true",
+                  "type": "text"
+                },
+                {
+                  "key": "items[0][captured_at]",
+                  "value": "{{yIn}}",
+                  "type": "text"
+                },
+                {
+                  "key": "items[0][photo]",
+                  "type": "file",
+                  "src": "sample-selfie.jpg"
+                },
+                {
+                  "key": "items[1][type]",
+                  "value": "check_out",
+                  "type": "text"
+                },
+                {
+                  "key": "items[1][uuid]",
+                  "value": "{{u2}}",
+                  "type": "text"
+                },
+                {
+                  "key": "items[1][project_id]",
+                  "value": "{{projectId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "items[1][latitude]",
+                  "value": "{{latInside}}",
+                  "type": "text"
+                },
+                {
+                  "key": "items[1][longitude]",
+                  "value": "{{lng}}",
+                  "type": "text"
+                },
+                {
+                  "key": "items[1][accuracy]",
+                  "value": "10",
+                  "type": "text"
+                },
+                {
+                  "key": "items[1][is_offline]",
+                  "value": "true",
+                  "type": "text"
+                },
+                {
+                  "key": "items[1][captured_at]",
+                  "value": "{{yOut}}",
+                  "type": "text"
+                },
+                {
+                  "key": "items[1][photo]",
+                  "type": "file",
+                  "src": "sample-selfie.jpg"
+                },
+                {
+                  "key": "items[2][type]",
+                  "value": "check_in",
+                  "type": "text"
+                },
+                {
+                  "key": "items[2][uuid]",
+                  "value": "{{u3}}",
+                  "type": "text"
+                },
+                {
+                  "key": "items[2][project_id]",
+                  "value": "{{projectId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "items[2][latitude]",
+                  "value": "{{latInside}}",
+                  "type": "text"
+                },
+                {
+                  "key": "items[2][longitude]",
+                  "value": "{{lng}}",
+                  "type": "text"
+                },
+                {
+                  "key": "items[2][accuracy]",
+                  "value": "10",
+                  "type": "text"
+                },
+                {
+                  "key": "items[2][is_offline]",
+                  "value": "true",
+                  "type": "text"
+                },
+                {
+                  "key": "items[2][captured_at]",
+                  "value": "{{expiredAt}}",
+                  "type": "text"
+                },
+                {
+                  "key": "items[2][photo]",
+                  "type": "file",
+                  "src": "sample-selfie.jpg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/attendance/sync",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "attendance",
+                "sync"
+              ]
+            },
+            "description": ""
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Izin / sakit / cuti",
+      "item": [
+        {
+          "name": "Ajukan sakit",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const d = new Date(Date.now() + 3 * 86400000); const e = new Date(Date.now() + 4 * 86400000);",
+                  "pm.collectionVariables.set('leaveStart', d.toISOString().slice(0, 10));",
+                  "pm.collectionVariables.set('leaveEnd', e.toISOString().slice(0, 10));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('reason = null', () => pm.expect(body.reason).to.eql(null));",
+                  "pm.test('amplop respons lengkap', () => pm.expect(body).to.have.all.keys('success','message','reason','data','errors'));",
+                  "pm.test('status pending', () => pm.expect(body.data.status).to.eql('pending'));",
+                  "pm.collectionVariables.set('leaveId', body.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"project_id\": \"{{projectId}}\",\n  \"type\": \"sakit\",\n  \"start_date\": \"{{leaveStart}}\",\n  \"end_date\": \"{{leaveEnd}}\",\n  \"reason\": \"Demam (uji QA)\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/leave-requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "leave-requests"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Ajukan izin bertabrakan → 422",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 422', () => pm.response.to.have.status(422));",
+                  "const body = pm.response.json();",
+                  "pm.test('reason = overlap', () => pm.expect(body.reason).to.eql('overlap'));",
+                  "pm.test('amplop respons lengkap', () => pm.expect(body).to.have.all.keys('success','message','reason','data','errors'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"project_id\": \"{{projectId}}\",\n  \"type\": \"izin\",\n  \"start_date\": \"{{leaveEnd}}\",\n  \"end_date\": \"{{leaveEnd}}\",\n  \"reason\": \"Bertabrakan\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/leave-requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "leave-requests"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Daftar pengajuan saya",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('reason = null', () => pm.expect(body.reason).to.eql(null));",
+                  "pm.test('amplop respons lengkap', () => pm.expect(body).to.have.all.keys('success','message','reason','data','errors'));",
+                  "pm.test('ada pengajuan', () => pm.expect(body.data.length).to.be.above(0));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/leave-requests?project_id={{projectId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "leave-requests"
+              ],
+              "query": [
+                {
+                  "key": "project_id",
+                  "value": "{{projectId}}"
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Karyawan biasa buka menu tim → 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 403', () => pm.response.to.have.status(403));",
+                  "const body = pm.response.json();",
+                  "pm.test('reason = http_403', () => pm.expect(body.reason).to.eql('http_403'));",
+                  "pm.test('amplop respons lengkap', () => pm.expect(body).to.have.all.keys('success','message','reason','data','errors'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/team/today?project_id={{projectId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "team",
+                "today"
+              ],
+              "query": [
+                {
+                  "key": "project_id",
+                  "value": "{{projectId}}"
+                }
+              ]
+            },
+            "description": ""
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Team Leader",
+      "item": [
+        {
+          "name": "Login Team Leader",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('reason = null', () => pm.expect(body.reason).to.eql(null));",
+                  "pm.test('amplop respons lengkap', () => pm.expect(body).to.have.all.keys('success','message','reason','data','errors'));",
+                  "pm.test('TL di proyek', () => pm.expect(body.data.profile.projects.some(p => p.is_team_leader)).to.eql(true));",
+                  "pm.collectionVariables.set('tlToken', body.data.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{tlUsername}}\",\n  \"password\": \"{{password}}\",\n  \"device_id\": \"{{tlDeviceId}}\",\n  \"platform\": \"ios\",\n  \"model\": \"QA Postman\",\n  \"app_version\": \"1.0.0\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Kehadiran tim hari ini",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('reason = null', () => pm.expect(body.reason).to.eql(null));",
+                  "pm.test('amplop respons lengkap', () => pm.expect(body).to.have.all.keys('success','message','reason','data','errors'));",
+                  "pm.test('ringkasan', () => pm.expect(body.data.summary).to.include.keys('total','checked_in','offsite','late'));",
+                  "pm.test('minimal 1 sudah check-in', () => pm.expect(body.data.summary.checked_in).to.be.at.least(1));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tlToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/team/today?project_id={{projectId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "team",
+                "today"
+              ],
+              "query": [
+                {
+                  "key": "project_id",
+                  "value": "{{projectId}}"
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Daftar persetujuan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('reason = null', () => pm.expect(body.reason).to.eql(null));",
+                  "pm.test('amplop respons lengkap', () => pm.expect(body).to.have.all.keys('success','message','reason','data','errors'));",
+                  "pm.test('pengajuan QA ada', () => pm.expect(body.data.leave_requests.map(l => l.id)).to.include(Number(pm.collectionVariables.get('leaveId'))));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tlToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/approvals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "approvals"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Setujui pengajuan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('reason = null', () => pm.expect(body.reason).to.eql(null));",
+                  "pm.test('amplop respons lengkap', () => pm.expect(body).to.have.all.keys('success','message','reason','data','errors'));",
+                  "pm.test('approved', () => pm.expect(body.data.status).to.eql('approved'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tlToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"approve\",\n  \"note\": \"Disetujui (uji QA)\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/approvals/leave/{{leaveId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "approvals",
+                "leave",
+                "{{leaveId}}"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Setujui ulang → 409",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 409', () => pm.response.to.have.status(409));",
+                  "const body = pm.response.json();",
+                  "pm.test('reason = already_processed', () => pm.expect(body.reason).to.eql('already_processed'));",
+                  "pm.test('amplop respons lengkap', () => pm.expect(body).to.have.all.keys('success','message','reason','data','errors'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tlToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"approve\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/approvals/leave/{{leaveId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "approvals",
+                "leave",
+                "{{leaveId}}"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Logout Team Leader",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('reason = null', () => pm.expect(body.reason).to.eql(null));",
+                  "pm.test('amplop respons lengkap', () => pm.expect(body).to.have.all.keys('success','message','reason','data','errors'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tlToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Token TL setelah logout → 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', () => pm.response.to.have.status(401));",
+                  "const body = pm.response.json();",
+                  "pm.test('reason = unauthenticated', () => pm.expect(body.reason).to.eql('unauthenticated'));",
+                  "pm.test('amplop respons lengkap', () => pm.expect(body).to.have.all.keys('success','message','reason','data','errors'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tlToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me"
+              ]
+            },
+            "description": ""
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Selesai",
+      "item": [
+        {
+          "name": "Logout karyawan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('reason = null', () => pm.expect(body.reason).to.eql(null));",
+                  "pm.test('amplop respons lengkap', () => pm.expect(body).to.have.all.keys('success','message','reason','data','errors'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            },
+            "description": ""
+          }
+        }
+      ]
+    }
+  ]
+}
